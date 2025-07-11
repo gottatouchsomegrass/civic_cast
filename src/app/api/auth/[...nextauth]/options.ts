@@ -16,6 +16,7 @@ export const authOptions: NextAuthOptions = {
           placeholder: "example@xyz.com",
         },
         password: { label: "Password", type: "password" },
+        role: { label: "Role", type: "text" },
       },
       async authorize(credentials: any): Promise<any> {
         await dbConnect();
@@ -26,9 +27,9 @@ export const authOptions: NextAuthOptions = {
           if (!user) {
             throw new Error("No user found with the provided credentials.");
           }
-          // if (!user.isVerified) {
-          //   throw new Error("Please verify your email before logging in.");
-          // }
+          if (!credentials.role || user.role !== credentials.role) {
+            throw new Error("Role does not match or is missing.");
+          }
           const isPasswordValid = await bcrypt.compare(
             credentials.password,
             user.password
@@ -50,6 +51,7 @@ export const authOptions: NextAuthOptions = {
         token.isVerified = user.isVerified;
         token.email = user.email;
         token.name = user.name;
+        token.role = user.role;
       }
       return token;
     },
@@ -59,6 +61,7 @@ export const authOptions: NextAuthOptions = {
         session.user.isVerified = token.isVerified;
         session.user.email = token.email;
         session.user.name = token.name;
+        session.user.role = token.role;
       }
       return session;
     },

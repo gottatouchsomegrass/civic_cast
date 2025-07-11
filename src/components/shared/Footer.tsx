@@ -220,7 +220,7 @@ export default function Footer() {
           <ul className="flex flex-col sm:flex-row justify-center items-center gap-6">
             <li>
               <Link
-                href="/vote"
+                href="/election"
                 className="group relative inline-block rounded-lg bg-gray-800/50 px-8 py-3 text-lg font-bold text-white transition-all duration-300 hover:bg-gray-800/80"
               >
                 <span className="absolute top-0 left-0 h-full w-0 bg-red-600 rounded-lg transition-all duration-300 group-hover:w-full"></span>
@@ -229,7 +229,7 @@ export default function Footer() {
             </li>
             <li>
               <Link
-                href="/login"
+                href="/signin"
                 className="group relative inline-block rounded-lg border-2 border-gray-700 px-8 py-3 text-lg font-bold text-white transition-all duration-300 hover:border-red-600"
               >
                 <span className="absolute top-0 left-0 h-full w-full scale-x-0 bg-red-600/20 transition-transform duration-300 group-hover:scale-x-100"></span>

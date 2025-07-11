@@ -37,12 +37,12 @@ export default function Navbar() {
         <Link href="#features" className="nav-link">
           Features
         </Link>
-        <Link href="#vote" className="nav-link">
+        <Link href="/election" className="nav-link">
           Vote Now
         </Link>
         <Link
-          href="/login"
-          className="nav-link bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300"
+          href="/signin"
+          className="nav-link bg-red-600 hover:bg-white text-white hover:text-red-600 font-bold py-2 px-4 rounded-lg transition-colors duration-300"
         >
           Login / Register
         </Link>
