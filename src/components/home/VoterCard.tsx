@@ -12,18 +12,20 @@ import {
 } from "@react-three/drei";
 import { Mesh } from "three";
 import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 
 function CardMesh() {
   const groupRef = useRef<Mesh>(null);
 
+  // Using your specified image URLs
   const profileTexture = useTexture(
-    "https://plus.unsplash.com/premium_photo-1689568126014-06fea9d5d341?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" // A professional, neutral placeholder portrait
+    "https://plus.unsplash.com/premium_photo-1689568126014-06fea9d5d341?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
   );
   const qrCodeTexture = useTexture(
     "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=CivicCast-Voter-123456789"
   );
   const hologramTexture = useTexture(
-    "https://plus.unsplash.com/premium_photo-1681488277609-1806135d1126?q=80&w=1031&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" // An abstract globe for the hologram
+    "https://plus.unsplash.com/premium_photo-1681488277609-1806135d1126?q=80&w=1031&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
   );
 
   useFrame((state) => {
@@ -68,7 +70,6 @@ function CardMesh() {
       >
         REPUBLIC OF NITR
       </Text>
-
       <Plane args={[0.8, 0.8]} position={[-1.4, 0.3, Z_OFFSET]}>
         <meshStandardMaterial map={profileTexture} />
       </Plane>
@@ -80,7 +81,6 @@ function CardMesh() {
       >
         Alex Doe
       </Text>
-
       <Text
         position={[-0.5, 0.5, Z_OFFSET]}
         fontSize={0.09}
@@ -97,7 +97,6 @@ function CardMesh() {
       >
         CIV-123456789
       </Text>
-
       <Text
         position={[-0.5, 0.3, Z_OFFSET]}
         fontSize={0.09}
@@ -114,7 +113,6 @@ function CardMesh() {
       >
         01/01/2024
       </Text>
-
       <Text
         position={[-0.5, 0.1, Z_OFFSET]}
         fontSize={0.09}
@@ -131,7 +129,6 @@ function CardMesh() {
       >
         31/12/2034
       </Text>
-
       <Text
         position={[-0.5, -0.1, Z_OFFSET]}
         fontSize={0.09}
@@ -148,21 +145,18 @@ function CardMesh() {
       >
         VERIFIED
       </Text>
-
-      {/* QR Code and Hologram */}
       <Plane args={[0.6, 0.6]} position={[1.4, 0.2, Z_OFFSET]}>
         <meshStandardMaterial map={qrCodeTexture} />
       </Plane>
       <Plane args={[0.7, 0.7]} position={[1.4, -0.7, Z_OFFSET + 0.001]}>
         <meshStandardMaterial
           map={hologramTexture}
-          opacity={0.1}
+          transparent
+          opacity={1}
           emissive={"#fff"}
-          emissiveIntensity={0.9}
+          emissiveIntensity={0.4}
         />
       </Plane>
-
-      {/* Signature Placeholder */}
       <Text
         position={[-0.5, -0.6, Z_OFFSET]}
         fontSize={0.15}
@@ -188,8 +182,33 @@ function CardMesh() {
 }
 
 export default function VoterIdCard() {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Animate the container div to fade and scale in slowly after the hero text
+  useGSAP(
+    () => {
+      gsap.fromTo(
+        containerRef.current,
+        { autoAlpha: 0, y: 120 }, // Start state: invisible and smaller
+        {
+          y: 0,
+          autoAlpha: 1, // End state: fully visible
+          scale: 1, // End state: full size
+          duration: 3, // A longer duration for a "slower" feel
+          ease: "power3.out", // A smooth easing function
+          delay: 1.8, // A longer delay to ensure it starts after the text
+        }
+      );
+    },
+    { scope: containerRef }
+  );
+
   return (
-    <div className="w-full h-[500px] cursor-grab">
+    // Add the ref and centering classes to the container
+    <div
+      ref={containerRef}
+      className="w-full h-[500px] cursor-grab flex justify-center items-center invisible"
+    >
       <Canvas camera={{ position: [0, 0, 4.5], fov: 50 }}>
         <ambientLight intensity={0.6} />
         <directionalLight position={[-5, 5, 10]} intensity={1} />
@@ -198,15 +217,12 @@ export default function VoterIdCard() {
           intensity={0.5}
           color="#e50914"
         />
-
         <Suspense fallback={null}>
           <Environment preset="park" environmentIntensity={0.8} />
         </Suspense>
-
         <Suspense fallback={null}>
           <CardMesh />
         </Suspense>
-
         <OrbitControls
           enableZoom={false}
           enablePan={false}
