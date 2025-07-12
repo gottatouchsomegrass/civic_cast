@@ -1,3 +1,4 @@
+// app/(home)/page.tsx
 "use client";
 
 import React from "react";
@@ -7,6 +8,7 @@ import VotingStory from "@/components/home/VotingStory";
 import ScrollIndicator from "@/components/home/ScrollIndicator";
 import Footer from "@/components/shared/Footer";
 import BackToTopButton from "@/components/home/BackToTopButton";
+import AnimatedHeroText from "@/components/home/AnimatedHeroText"; // <-- Import the new component
 
 export default function HomePage() {
   return (
@@ -15,18 +17,11 @@ export default function HomePage() {
       <main>
         {/* Hero Section */}
         <div className="relative container mx-auto px-6 text-center mt-12 pb-20">
-          <h1 className="hero-title text-5xl md:text-7xl font-extrabold leading-tight">
-            Your Voice, <span className="text-[#e50914]">Your Vote.</span>
-            <br />
-            Decide the Future.
-          </h1>
-          <p className="hero-subtitle text-xl text-gray-300 mt-6 max-w-2xl mx-auto">
-            Civic Cast provides a secure and transparent platform for digital
-            elections. Register as a candidate or cast your vote with
-            confidence.
-          </p>
+          {/* --- Replace static text with the animated component --- */}
+          <AnimatedHeroText />
+
           <VoterIdCard />
-          <ScrollIndicator /> {/* Indicator to prompt scrolling */}
+          <ScrollIndicator />
         </div>
 
         {/* Scrollytelling Section */}
