@@ -156,3 +156,6 @@ body {
   color: black;
   transition-delay: 0.1s; /* Delay the color change slightly */
 }
+.input-style {
+  @apply block w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent;
+}

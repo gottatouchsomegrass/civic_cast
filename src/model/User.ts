@@ -1,19 +1,30 @@
+// models/User.ts
 import mongoose, { Schema } from "mongoose";
+
 const userSchema = new Schema(
   {
-    name: String,
+    name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    password: String,
+    password: { type: String, required: true },
     isVerified: { type: Boolean, default: false },
-    gender: String,
-    dateOfBirth: Date,
-    address: String,
-    phone: String,
-    doctorId: String,
-    bloodGroup: String,
-    height: Number,
-    weight: Number,
-    profilePicture: String,
+    role: {
+      type: String,
+      enum: ["admin", "voter", "candidate"],
+      default: "voter",
+    },
+
+    // --- Candidate-Specific Fields ---
+    profilePicture: { type: String }, // Requirement will be handled in the API
+    election: { type: Schema.Types.ObjectId, ref: "Election" }, // Link to a specific election
+    electionPost: { type: String },
+    voteCount: { type: Number, default: 0 },
+
+    votes: [
+      {
+        election: { type: Schema.Types.ObjectId, ref: "Election" },
+        candidate: { type: Schema.Types.ObjectId, ref: "User" },
+      },
+    ],
   },
   { timestamps: true }
 );
