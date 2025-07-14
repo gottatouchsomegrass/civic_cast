@@ -251,11 +251,11 @@ export default function Footer() {
             </li>
             <li>
               <Link
-                href="/login"
+                href="/signin"
                 className="group relative inline-block rounded-lg border-2 border-gray-700 px-8 py-3 text-lg font-bold text-white transition-all duration-300 hover:border-red-600"
               >
                 <span className="absolute top-0 left-0 h-full w-full scale-x-0 bg-red-600/20 transition-transform duration-300 group-hover:scale-x-100"></span>
-                <span className="relative">Login / Register</span>
+                <span className="relative">Sign In / Register</span>
               </Link>
             </li>
           </ul>

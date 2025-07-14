@@ -28,7 +28,7 @@ export default function SignInPage() {
       toast.error(res.error);
     } else {
       toast.success("Signed in successfully");
-      router.push("/");
+      router.push("/dashboard");
     }
   }
 
@@ -62,7 +62,7 @@ export default function SignInPage() {
             Don&apos;t have an account?{" "}
             <Link href="/signup">
               <Button variant="link" className="px-1 text-primary">
-                Sign Up
+                Register
               </Button>
             </Link>
           </p>
