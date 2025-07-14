@@ -1,5 +1,5 @@
 import SignOutPage from "../(auth)/signout/page";
-import { ModeToggle } from "@/components/ModeToggle";
+// import { ModeToggle } from "@/components/ModeToggle";
 
 export default function Home() {
   return (
