@@ -68,11 +68,15 @@ export async function GET() {
       recentUsers,
       weeklyActivity,
     });
-  } catch (error: any) {
-    console.error("Error fetching dashboard stats:", error.message);
-    return NextResponse.json(
-      { message: `Error fetching dashboard stats: ${error.message}` },
-      { status: 500 }
-    );
+  } catch (error) {
+    let errorMessage =
+      "An unexpected error occurred while fetching dashboard stats.";
+
+    if (error instanceof Error) {
+      errorMessage = `Error fetching dashboard stats: ${error.message}`;
+      console.error(errorMessage);
+    } else {
+      console.error("An unknown error occurred:", error);
+    }
   }
 }

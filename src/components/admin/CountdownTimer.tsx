@@ -3,15 +3,21 @@
 
 import React, { useState, useEffect } from "react";
 
-// A helper function to format the time object into a string
-const formatTime = (time: any): string => {
+interface TimeLeft {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
+
+type TimerState = TimeLeft | "Calculating..." | "Election Ended";
+
+const formatTime = (time: TimerState): string => {
   if (typeof time === "string") {
     return time;
   }
-  if (time && typeof time === "object") {
-    return `${time.days}d ${time.hours}h ${time.minutes}m ${time.seconds}s`;
-  }
-  return "Loading..."; // Fallback for any other case
+
+  return `${time.days}d ${time.hours}h ${time.minutes}m ${time.seconds}s`;
 };
 
 export default function CountdownTimer({
@@ -19,14 +25,14 @@ export default function CountdownTimer({
 }: {
   endDate: Date | string;
 }) {
-  // Initialize state with a simple string to prevent errors
-  const [timeLeft, setTimeLeft] = useState<object | string>("Calculating...");
+  const [timeLeft, setTimeLeft] = useState<TimerState>("Calculating...");
 
   useEffect(() => {
-    // This function calculates the time difference
     const calculateTimeLeft = () => {
       const difference = +new Date(endDate) - +new Date();
+
       if (difference > 0) {
+        // Set the state with an object that matches the TimeLeft interface.
         setTimeLeft({
           days: Math.floor(difference / (1000 * 60 * 60 * 24)),
           hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
@@ -38,16 +44,20 @@ export default function CountdownTimer({
       }
     };
 
-    // Run once immediately on mount
+    // Run once immediately on mount.
     calculateTimeLeft();
 
-    // Set up an interval to update the timer every second
+    // Set up an interval to update the timer every second.
     const timer = setInterval(calculateTimeLeft, 1000);
 
-    // Clean up the interval when the component unmounts
+    // Clean up the interval when the component unmounts or endDate changes.
     return () => clearInterval(timer);
   }, [endDate]);
 
-  // The component now always returns a valid element (a string inside a span)
-  return <span>{formatTime(timeLeft)}</span>;
+  // The component always renders the correctly formatted time string.
+  return (
+    <span className="font-mono text-lg font-semibold">
+      {formatTime(timeLeft)}
+    </span>
+  );
 }

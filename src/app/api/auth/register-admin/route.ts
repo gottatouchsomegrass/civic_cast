@@ -41,8 +41,19 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
+    console.error("Error creating admin account:", error);
+
+    let errorMessage =
+      "An unexpected error occurred while creating the admin account.";
+
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
     return NextResponse.json(
-      { message: "An error occurred while creating the admin account." },
+      {
+        message: "Failed to create admin account.",
+        error: errorMessage,
+      },
       { status: 500 }
     );
   }

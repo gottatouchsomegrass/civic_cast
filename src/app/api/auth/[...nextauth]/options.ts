@@ -1,4 +1,6 @@
-import { NextAuthOptions } from "next-auth";
+// ./src/app/api/auth/[...nextauth]/options.ts
+
+import { NextAuthOptions, User as NextAuthUser } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import dbConnect from "@/lib/mongodb";
@@ -12,42 +14,51 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: {
           label: "Email",
-          type: "email ",
+          type: "email",
           placeholder: "example@xyz.com",
         },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials: any): Promise<any> {
+      async authorize(credentials): Promise<NextAuthUser | null> {
         await dbConnect();
         try {
-          const user = await User.findOne({
-            $or: [{ email: credentials.email }, { name: credentials.name }],
-          });
+          const user = await User.findOne({ email: credentials?.email });
+
           if (!user) {
-            throw new Error("No user found with the provided credentials.");
+            throw new Error("No user found with the provided email.");
           }
-          // if (!user.isVerified) {
-          //   throw new Error("Please verify your email before logging in.");
-          // }
+
           const isPasswordValid = await bcrypt.compare(
-            credentials.password,
+            credentials?.password || "",
             user.password
           );
-          if (isPasswordValid) return user;
-          else {
+
+          if (isPasswordValid) {
+            return {
+              id: user._id.toString(),
+              email: user.email,
+              name: user.name,
+              isVerified: user.isVerified,
+            };
+          } else {
             throw new Error("Invalid password.");
           }
-        } catch (error: any) {
-          throw new Error(error);
+        } catch (error) {
+          if (error instanceof Error) {
+            throw new Error(error.message);
+          }
+          throw new Error("An unknown error occurred during authorization.");
         }
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user, account, profile }) {
+    // FIX: Removed unused 'account' and 'profile' parameters.
+    async jwt({ token, user }) {
       if (user) {
-        token._id = user._id;
-        token.isVerified = user.isVerified;
+        // Now using the custom properties defined in our type declaration file.
+        token._id = user.id;
+        token.isVerified = user.isVerified; // Cast needed if not in default User
         token.email = user.email;
         token.name = user.name;
       }

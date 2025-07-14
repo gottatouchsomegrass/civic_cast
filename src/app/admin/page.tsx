@@ -16,9 +16,23 @@ import CustomSelect from "@/components/admin/CustomSelect";
 // Import icons for use in the dashboard
 import { Users, UserPlus, CheckSquare, Vote, ArrowRight } from "lucide-react";
 
+// FIX: Define a specific interface for the dashboard statistics object.
+// This eliminates the 'any' type and provides full type safety.
+interface DashboardStats {
+  totalCandidates: string;
+  totalVoters: string;
+  totalElections: string;
+  totalVotes: string;
+  weeklyActivity: { date: string; count: number; day: string }[];
+  allElections: Election[];
+  allCandidates: User[];
+  recentUsers: User[];
+}
+
 export default function AdminDashboardPage() {
   // --- State Management ---
-  const [stats, setStats] = useState<any>(null);
+  // FIX: Use the specific DashboardStats interface instead of 'any'.
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [chartElectionId, setChartElectionId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,15 +62,22 @@ export default function AdminDashboardPage() {
         if (!res.ok)
           throw new Error("Failed to load dashboard data. Please try again.");
 
-        const data = await res.json();
+        // The 'data' variable will be checked against the DashboardStats type.
+        const data: DashboardStats = await res.json();
         setStats(data);
 
-        // Set a default election for the chart when the data arrives
         if (data.allElections && data.allElections.length > 0) {
           setChartElectionId(data.allElections[0]._id);
         }
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        console.error("An operation failed:", err);
+        let errorMessage = "An unexpected error occurred.";
+        if (err instanceof Error) {
+          errorMessage = err.message;
+        } else if (typeof err === "string") {
+          errorMessage = err;
+        }
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -83,7 +104,7 @@ export default function AdminDashboardPage() {
   // --- Conditional Rendering ---
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full w-full">
+      <div className="flex h-full w-full items-center justify-center">
         <p className="text-gray-400">Loading Dashboard...</p>
       </div>
     );
@@ -91,8 +112,17 @@ export default function AdminDashboardPage() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-full w-full">
+      <div className="flex h-full w-full items-center justify-center">
         <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
+
+  // By this point, 'stats' must be a valid DashboardStats object.
+  if (!stats) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <p className="text-gray-400">No data available.</p>
       </div>
     );
   }
@@ -103,13 +133,13 @@ export default function AdminDashboardPage() {
       {/* Header */}
       <div className="dashboard-item">
         <h2 className="text-3xl font-bold text-white">Dashboard Overview</h2>
-        <p className="text-gray-400 mt-1">
+        <p className="mt-1 text-gray-400">
           A high-level summary of all election activity.
         </p>
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         <div className="dashboard-item">
           <StatCard
             title="Total Candidates"
@@ -141,13 +171,13 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 dashboard-item">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="dashboard-item lg:col-span-2">
           <WeeklyActivityChart activity={stats.weeklyActivity} />
         </div>
         <div className="dashboard-item">
-          <div className="bg-[#181818] p-6 rounded-lg border border-gray-800 h-full flex flex-col">
-            <div className="flex justify-between items-center mb-4">
+          <div className="flex h-full flex-col rounded-lg border border-gray-800 bg-[#181818] p-6">
+            <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">
                 Vote Distribution
               </h3>
@@ -165,32 +195,32 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Activity Feed and Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="dashboard-item">
           <RecentActivityFeed users={stats.recentUsers} />
         </div>
-        <div className="lg:col-span-2 dashboard-item bg-[#181818] p-6 rounded-lg border border-gray-800">
-          <h3 className="text-lg font-semibold text-white mb-4">
+        <div className="dashboard-item rounded-lg border border-gray-800 bg-[#181818] p-6 lg:col-span-2">
+          <h3 className="mb-4 text-lg font-semibold text-white">
             Quick Actions
           </h3>
           <div className="space-y-3">
             <Link
               href="/admin/manage-candidates"
-              className="flex justify-between items-center p-4 bg-[#282828] rounded-lg hover:bg-red-600/20 transition-colors"
+              className="flex items-center justify-between rounded-lg bg-[#282828] p-4 transition-colors hover:bg-red-600/20"
             >
               <span>Register a New Candidate</span>
               <ArrowRight className="h-5 w-5 text-red-500" />
             </Link>
             <Link
               href="/admin/election-settings"
-              className="flex justify-between items-center p-4 bg-[#282828] rounded-lg hover:bg-red-600/20 transition-colors"
+              className="flex items-center justify-between rounded-lg bg-[#282828] p-4 transition-colors hover:bg-red-600/20"
             >
               <span>Create a New Election</span>
               <ArrowRight className="h-5 w-5 text-red-500" />
             </Link>
             <Link
               href="/admin/results"
-              className="flex justify-between items-center p-4 bg-[#282828] rounded-lg hover:bg-red-600/20 transition-colors"
+              className="flex items-center justify-between rounded-lg bg-[#282828] p-4 transition-colors hover:bg-red-600/20"
             >
               <span>View Full Results</span>
               <ArrowRight className="h-5 w-5 text-red-500" />

@@ -40,7 +40,7 @@ export default function AdminSignUpPage() {
         setError(data.message || "Failed to create admin account.");
       }
     } catch (err) {
-      setError("An unexpected error occurred. Please try again.");
+      setError(`An unexpected error occurred. Please try again. : ${err}`);
     } finally {
       setLoading(false);
     }
