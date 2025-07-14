@@ -1,18 +1,15 @@
-// src/app/api/users/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import User from "@/model/User";
 import connectToDatabase from "@/lib/mongodb";
 
-interface ParamsContext {
-  params: {
-    id: string;
-  };
-}
-
-// The function signature now uses the clean, dedicated interface.
-export async function DELETE(request: NextRequest, context: ParamsContext) {
-  // Destructure the id from the well-typed context object.
-  const { id } = context.params;
+// The function signature must destructure `params` from a context
+// object with an explicitly defined inline type.
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  // `params` is now correctly typed, and `id` is a string.
+  const { id } = params;
 
   try {
     await connectToDatabase();
