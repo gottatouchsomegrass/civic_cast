@@ -49,27 +49,31 @@ export default function ElectionPage() {
     fetchData();
   }, []);
 
+  const fetchAndSetVotes = async (selectedElectionId: string) => {
+    if (!voterId || !selectedElectionId) return;
+    try {
+      const res = await fetch(`/api/users`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const voter = data.voters?.find((v: User) => v._id === voterId);
+      if (voter && Array.isArray(voter.votes)) {
+        const votedMap: VotedMap = {};
+        for (const v of voter.votes) {
+          if (v.election === selectedElectionId) {
+            votedMap[`${v.election}_${v.post}`] = true;
+          }
+        }
+        setVoted(votedMap);
+      }
+    } catch {}
+  };
+
   // On election select, fetch user's votes for this election to disable buttons
   useEffect(() => {
-    const fetchVotes = async () => {
-      if (!voterId || !selectedElection) return;
-      try {
-        const res = await fetch(`/api/users`);
-        if (!res.ok) return;
-        const data = await res.json();
-        const voter = data.voters?.find((v: User) => v._id === voterId);
-        if (voter && Array.isArray(voter.votes)) {
-          const votedMap: VotedMap = {};
-          for (const v of voter.votes) {
-            if (v.election === selectedElection._id) {
-              votedMap[`${v.election}_${v.post}`] = true;
-            }
-          }
-          setVoted(votedMap);
-        }
-      } catch {}
-    };
-    fetchVotes();
+    if (selectedElection) {
+      fetchAndSetVotes(selectedElection._id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [voterId, selectedElection]);
 
   const handleVote = async (candidateId: string, electionId: string, post: string) => {
@@ -87,11 +91,11 @@ export default function ElectionPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        setVoted((prev) => ({ ...prev, [voteKey]: true }));
+        await fetchAndSetVotes(electionId); // Refetch votes after voting
         toast.success("Vote cast successfully!");
       } else {
         if (res.status === 409) {
-          setVoted((prev) => ({ ...prev, [voteKey]: true }));
+          await fetchAndSetVotes(electionId); // Refetch votes if already voted
           toast.error(data.message || "You have already voted for this post.");
         } else {
           toast.error(data.message || "Failed to cast vote.");

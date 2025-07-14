@@ -23,6 +23,7 @@ const userSchema = new Schema(
       {
         election: { type: Schema.Types.ObjectId, ref: "Election" },
         candidate: { type: Schema.Types.ObjectId, ref: "User" },
+        post: { type: String },
       },
     ],
   },

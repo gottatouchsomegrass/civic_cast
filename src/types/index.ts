@@ -32,6 +32,7 @@ export interface User {
   votes?: {
     election: string; // Corresponds to an Election's _id
     candidate: string; // Corresponds to a User's _id
+    post: string; // The post/position voted for
   }[];
   createdAt?: string; // ISO date string
   updatedAt?: string; // ISO date string

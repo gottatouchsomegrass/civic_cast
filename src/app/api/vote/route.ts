@@ -32,6 +32,12 @@ export async function POST(request: Request) {
       post,
     });
 
+    // Add this vote to the voter's votes array
+    await User.findByIdAndUpdate(
+      voterId,
+      { $push: { votes: { election: electionId, candidate: candidateId, post } } }
+    );
+
     return NextResponse.json({ message: "Vote cast successfully." }, { status: 201 });
   } catch (error) {
     console.error(error);
