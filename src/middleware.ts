@@ -16,7 +16,7 @@ export async function middleware(request: NextRequest) {
     (url.pathname.startsWith("/signin") ||
       url.pathname.startsWith("/admin/signin"))
   ) {
-    const redirectTo = token.role === "admin" ? "/admin" : "/dashboard";
+    const redirectTo = token.role === "admin" ? "/admin" : "/election";
     return NextResponse.redirect(new URL(redirectTo, request.url));
   }
 
@@ -47,6 +47,7 @@ export const config = {
     "/signin",
     "/signup",
     "/signout",
-    "/admin/:path*", // Add the admin route to the matcher
+    "/admin/:path*",
+    "/election" // Add the admin route to the matcher
   ],
 };
