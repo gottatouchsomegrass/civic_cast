@@ -29,7 +29,6 @@ export default function Navbar() {
     { scope: container }
   );
 
-  // GSAP animation for mobile menu links
   useGSAP(
     () => {
       if (isMenuOpen) {
@@ -50,7 +49,6 @@ export default function Navbar() {
     { dependencies: [isMenuOpen] }
   );
 
-  // Effect to lock body scroll when the menu is open
   useEffect(() => {
     if (isMenuOpen) {
       document.body.classList.add("overflow-hidden");

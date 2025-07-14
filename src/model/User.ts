@@ -16,7 +16,7 @@ const UserSchema: Schema<IUser> = new Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true, select: false }, // Hide password by default
+    password: { type: String, required: true, select: false },
     isVerified: { type: Boolean, default: false },
     role: {
       type: String,
