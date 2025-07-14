@@ -6,7 +6,6 @@ import gsap from "gsap";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
-import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 
 gsap.registerPlugin(useGSAP);
@@ -17,14 +16,10 @@ export default function Navbar() {
   const { data: session } = useSession();
   const isSignedIn = !!session?.user;
 
-  // Only show login/register if not signed in
-  const navLinks = isSignedIn
-    ? []
-    : [
-        { href: "/signin", label: "Sign In / Register", isButton: true },
-      ];
+  // FIX: 'navLinks' now always includes the core navigation links.
+  const navLinks = [{ href: "/election", label: "Vote Now", isButton: false }];
 
-  // Animation for the desktop navbar links
+  // GSAP animations and useEffect for body scroll lock remain the same.
   useGSAP(
     () => {
       gsap.fromTo(
@@ -36,7 +31,6 @@ export default function Navbar() {
     { scope: container }
   );
 
-  // Animation for the mobile menu links
   useGSAP(
     () => {
       if (isMenuOpen) {
@@ -57,7 +51,6 @@ export default function Navbar() {
     { dependencies: [isMenuOpen] }
   );
 
-  // Effect to lock body scroll when the menu is open
   useEffect(() => {
     if (isMenuOpen) {
       document.body.classList.add("overflow-hidden");
@@ -72,13 +65,13 @@ export default function Navbar() {
   return (
     <header
       ref={container}
-      className="relative z-50 flex items-center justify-between px-6 py-6 md:px-10 bg-[var(--background-dark)] border-b border-gray-800 shadow"
+      className="relative z-50 flex items-center justify-between border-b border-gray-800 bg-[var(--background-dark)] px-6 py-6 shadow md:px-10"
     >
       {/* Logo */}
       <div className="logo">
         <Link
           href="/"
-          className="nav-link-desktop text-2xl font-extrabold text-[var(--text-light)] tracking-tight drop-shadow"
+          className="nav-link-desktop text-2xl font-extrabold tracking-tight text-[var(--text-light)] drop-shadow"
         >
           Civic<span className="text-[var(--primary-red)]">Cast</span>
         </Link>
@@ -86,28 +79,37 @@ export default function Navbar() {
 
       {/* Desktop Navigation */}
       <nav className="hidden items-center gap-8 text-lg md:flex">
+        {/* Render static links first */}
         {navLinks.map((link) => (
           <Link
             key={link.href}
             href={link.href}
-            className={`nav-link-desktop transition-colors hover:text-[var(--primary-red)] ${
-              link.isButton
-                ? "group relative overflow-hidden rounded-lg bg-[var(--primary-red)] px-4 py-2 font-bold text-white transition-all duration-300 hover:scale-105 hover:bg-[var(--hover-red)]"
-                : ""
-            }`}
+            className="nav-link-desktop transition-colors hover:text-[var(--primary-red)] font-semibold"
           >
-            <span className="relative z-10">{link.label}</span>
+            {link.label}
           </Link>
         ))}
-        {/* Sign Out button for signed-in users */}
-        {isSignedIn && (
-          <Button
+
+        {/* FIX: Conditionally render the authentication button */}
+        {isSignedIn ? (
+          <button
             onClick={() => signOut({ callbackUrl: "/signin" })}
-            className="ml-4 flex items-center gap-2 bg-[var(--primary-red)] hover:bg-[var(--hover-red)] text-white font-bold px-4 py-2 rounded-lg shadow transition-all duration-200"
+            className="group nav-link-desktop relative inline-block rounded-lg border-2 border-gray-700 px-4 py-2 font-bold text-white transition-all duration-300 hover:border-red-600"
           >
-            <LogOut className="w-5 h-5" />
-            Sign Out
-          </Button>
+            <span className="absolute top-0 left-0 h-full w-full scale-x-0 bg-red-600/20 transition-transform duration-300 group-hover:scale-x-100"></span>
+            <span className="relative z-10 flex items-center gap-2">
+              <LogOut className="h-5 w-5" />
+              Sign Out
+            </span>
+          </button>
+        ) : (
+          <Link
+            href="/signin"
+            className="group nav-link-desktop relative inline-block rounded-lg border-2 border-gray-700 px-4 py-2 font-bold text-white transition-all duration-300 hover:border-red-600"
+          >
+            <span className="absolute top-0 left-0 h-full w-full scale-x-0 bg-red-600/20 transition-transform duration-300 group-hover:scale-x-100"></span>
+            <span className="relative z-10">Sign In / Register</span>
+          </Link>
         )}
       </nav>
 
@@ -124,13 +126,12 @@ export default function Navbar() {
 
       {/* Mobile Menu Overlay */}
       {isMenuOpen && (
-        <div className="fixed top-0 left-0 flex h-screen w-full flex-col bg-[#080808]/95 backdrop-blur-lg md:hidden z-50">
-          {/* Header inside the mobile menu */}
+        <div className="fixed top-0 left-0 z-50 flex h-screen w-full flex-col bg-[#080808]/95 backdrop-blur-lg md:hidden">
           <div className="flex items-center justify-between border-b border-gray-800 p-6">
             <Link
               href="/"
               onClick={() => setIsMenuOpen(false)}
-              className="text-2xl font-extrabold text-[var(--text-light)] tracking-tight drop-shadow"
+              className="text-2xl font-extrabold tracking-tight text-[var(--text-light)] drop-shadow"
             >
               Civic<span className="text-[var(--primary-red)]">Cast</span>
             </Link>
@@ -142,34 +143,42 @@ export default function Navbar() {
               <X size={30} />
             </button>
           </div>
-          {/* Centered navigation links */}
           <nav className="flex flex-1 flex-col items-center justify-center gap-10 text-2xl">
+            {/* Render static links */}
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setIsMenuOpen(false)}
-                className={`nav-link-mobile text-[var(--text-light)] ${
-                  link.isButton
-                    ? "rounded-lg bg-[var(--primary-red)] px-6 py-3 font-bold hover:bg-[var(--hover-red)]"
-                    : ""
-                }`}
+                className="nav-link-mobile font-semibold text-white"
               >
                 {link.label}
               </Link>
             ))}
-            {/* Sign Out button for signed-in users (mobile) */}
-            {isSignedIn && (
-              <Button
+            {/* FIX: Conditionally render the authentication button for mobile */}
+            {isSignedIn ? (
+              <button
                 onClick={() => {
                   setIsMenuOpen(false);
                   signOut({ callbackUrl: "/signin" });
                 }}
-                className="flex items-center gap-2 bg-[var(--primary-red)] hover:bg-[var(--hover-red)] text-white font-bold px-6 py-3 rounded-lg shadow transition-all duration-200 mt-6"
+                className="group nav-link-mobile relative mt-6 inline-block rounded-lg border-2 border-gray-700 px-6 py-3 font-bold text-white"
               >
-                <LogOut className="w-5 h-5" />
-                Sign Out
-              </Button>
+                <span className="absolute top-0 left-0 h-full w-full scale-x-0 bg-red-600/20 transition-transform duration-300 group-hover:scale-x-100"></span>
+                <span className="relative z-10 flex items-center gap-2">
+                  <LogOut className="h-5 w-5" />
+                  Sign Out
+                </span>
+              </button>
+            ) : (
+              <Link
+                href="/signin"
+                onClick={() => setIsMenuOpen(false)}
+                className="group nav-link-mobile relative mt-6 inline-block rounded-lg border-2 border-gray-700 px-6 py-3 font-bold text-white"
+              >
+                <span className="absolute top-0 left-0 h-full w-full scale-x-0 bg-red-600/20 transition-transform duration-300 group-hover:scale-x-100"></span>
+                <span className="relative z-10">Sign In / Register</span>
+              </Link>
             )}
           </nav>
         </div>

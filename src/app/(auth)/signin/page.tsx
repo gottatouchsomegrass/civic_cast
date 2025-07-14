@@ -1,17 +1,57 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Navbar from "@/components/shared/Navbar";
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
+import { Loader2 } from "lucide-react";
 
 export default function SignInPage() {
   const router = useRouter();
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const containerRef = useRef(null);
+
+  // --- GSAP Animation Sequence ---
+  useGSAP(
+    () => {
+      const tl = gsap.timeline();
+
+      tl.from(".sign-in-card", {
+        duration: 1.2,
+        autoAlpha: 0,
+        y: 100,
+        scale: 0.95,
+        ease: "power3.out",
+      });
+
+      tl.from(
+        ".form-element",
+        {
+          duration: 0.8,
+          autoAlpha: 0,
+          y: 30,
+          stagger: 0.15,
+          ease: "power2.out",
+        },
+        "-=0.8"
+      );
+
+      gsap.to(".background-glow", {
+        duration: 10,
+        scale: 1.5,
+        opacity: 0.3,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut",
+      });
+    },
+    { scope: containerRef }
+  );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -28,45 +68,76 @@ export default function SignInPage() {
     if (res?.error) {
       toast.error(res.error);
     } else {
-      toast.success("Signed in successfully");
+      toast.success("Signed in successfully!");
+      // FIX: Always redirect to the /election page for normal users
       router.push("/election");
     }
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
-      <Navbar />
-      <div className="flex items-center justify-center min-h-[80vh] px-4">
-        <div className="w-full max-w-md bg-[#181818] rounded-2xl shadow-2xl p-8 space-y-6 border border-gray-800">
-          <h2 className="text-3xl font-extrabold text-center mb-4 tracking-tight drop-shadow">Sign In</h2>
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <Input
-              placeholder="Email"
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              required
-              className="bg-[#101010] border border-gray-700 text-white"
-            />
-            <Input
-              placeholder="Password"
-              type="password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              required
-              className="bg-[#101010] border border-gray-700 text-white"
-            />
-            <Button type="submit" className="w-full font-bold bg-[var(--primary-red)] hover:bg-[var(--hover-red)] text-white rounded-lg py-3 text-lg" disabled={loading}>
-              {loading ? "Signing in..." : "Sign In"}
-            </Button>
+    <div
+      ref={containerRef}
+      className="relative min-h-screen overflow-hidden bg-[#0a0a0a] text-white"
+    >
+      {/* Animated background element */}
+      <div className="background-glow absolute top-1/4 left-1/4 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-500/20 opacity-20 blur-3xl"></div>
+
+      {/* FIX: Navbar has been removed for a focused login experience */}
+
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <div className="sign-in-card invisible w-full max-w-md space-y-8 rounded-2xl border border-gray-800 bg-[#181818]/80 p-10 shadow-2xl backdrop-blur-sm">
+          <h2 className="form-element invisible text-center text-3xl font-extrabold tracking-tight text-white drop-shadow">
+            Sign In
+          </h2>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="form-element invisible">
+              <Input
+                placeholder="Email"
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                required
+                className="bg-[#101010] border-gray-700 h-12 text-base"
+              />
+            </div>
+            <div className="form-element invisible">
+              <Input
+                placeholder="Password"
+                type="password"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                required
+                className="bg-[#101010] border-gray-700 h-12 text-base"
+              />
+            </div>
+            <div className="form-element invisible">
+              <Button
+                type="submit"
+                className="group relative w-full overflow-hidden rounded-lg bg-[var(--primary-red)] py-3 text-lg font-bold text-white transition-all duration-300 hover:bg-[var(--hover-red)]"
+                disabled={loading}
+              >
+                <div className="absolute inset-0 w-0 bg-white/20 transition-all duration-300 ease-out group-hover:w-full"></div>
+                <span className="relative flex items-center justify-center">
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    "Sign In"
+                  )}
+                </span>
+              </Button>
+            </div>
           </form>
-          <div className="text-center pt-2">
+          <div className="form-element invisible pt-2 text-center">
             <p className="text-sm text-gray-400">
               Don&apos;t have an account?{" "}
-              <Link href="/signup">
-                <Button variant="link" className="px-1 text-[var(--primary-red)] font-bold">
-                  Register
-                </Button>
+              <Link
+                href="/signup"
+                className="font-bold text-[var(--primary-red)] underline-offset-4 hover:underline"
+              >
+                Register
               </Link>
             </p>
           </div>

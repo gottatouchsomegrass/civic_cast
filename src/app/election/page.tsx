@@ -21,7 +21,9 @@ export default function ElectionPage() {
 
   const [elections, setElections] = useState<Election[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [selectedElection, setSelectedElection] = useState<Election | null>(null);
+  const [selectedElection, setSelectedElection] = useState<Election | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [voted, setVoted] = useState<VotedMap>({});
@@ -35,7 +37,8 @@ export default function ElectionPage() {
           fetch("/api/elections"),
           fetch("/api/users"),
         ]);
-        if (!electionsRes.ok || !usersRes.ok) throw new Error("Failed to fetch data");
+        if (!electionsRes.ok || !usersRes.ok)
+          throw new Error("Failed to fetch data");
         const electionsData = await electionsRes.json();
         const usersData = await usersRes.json();
         setElections(electionsData);
@@ -76,7 +79,11 @@ export default function ElectionPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [voterId, selectedElection]);
 
-  const handleVote = async (candidateId: string, electionId: string, post: string) => {
+  const handleVote = async (
+    candidateId: string,
+    electionId: string,
+    post: string
+  ) => {
     if (!voterId) {
       toast.error("You must be signed in to vote.");
       return;
@@ -118,7 +125,9 @@ export default function ElectionPage() {
   if (error) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-[var(--background-dark)]">
-        <p className="text-[var(--primary-red)] text-lg font-semibold">{error}</p>
+        <p className="text-[var(--primary-red)] text-lg font-semibold">
+          {error}
+        </p>
       </div>
     );
   }
@@ -129,7 +138,9 @@ export default function ElectionPage() {
       <div className="min-h-screen bg-[var(--background-dark)] text-[var(--text-light)]">
         <Navbar />
         <div className="px-4 pt-12">
-          <h2 className="text-4xl font-extrabold text-center mb-12 tracking-tight text-[var(--text-light)] drop-shadow-lg">Elections</h2>
+          <h2 className="text-4xl font-extrabold text-center mb-12 tracking-tight text-[var(--text-light)] drop-shadow-lg">
+            Elections
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 max-w-4xl mx-auto">
             {elections.map((election) => (
               <button
@@ -175,17 +186,24 @@ export default function ElectionPage() {
           <div className="space-y-12">
             {selectedElection.posts.map((post) => {
               const postCandidates = candidates.filter(
-                (c) => c.election?.['_id'] === selectedElection._id && c.electionPost === post.title
+                (c) =>
+                  c.election?.["_id"] === selectedElection._id &&
+                  c.electionPost === post.title
               );
               const voteKey = `${selectedElection._id}_${post.title}`;
               const hasVoted = voted[voteKey];
               return (
-                <div key={post._id} className="bg-[#181818] p-8 rounded-2xl border-2 border-gray-800 shadow-xl">
+                <div
+                  key={post._id}
+                  className="bg-[#181818] p-8 rounded-2xl border-2 border-gray-800 shadow-xl"
+                >
                   <h3 className="text-2xl font-bold text-[var(--primary-red)] mb-6 tracking-tight drop-shadow">
                     {post.title} Candidates
                   </h3>
                   {postCandidates.length === 0 ? (
-                    <p className="text-gray-400">No candidates registered for this post.</p>
+                    <p className="text-gray-400">
+                      No candidates registered for this post.
+                    </p>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                       {postCandidates.map((candidate) => (
@@ -208,10 +226,24 @@ export default function ElectionPage() {
                           </span>
                           <Button
                             disabled={hasVoted || voteLoading === voteKey}
-                            onClick={() => handleVote(candidate._id, selectedElection._id, post.title)}
-                            className={`w-full mt-2 font-bold rounded-lg px-4 py-2 transition-all duration-200 ${hasVoted ? "bg-gray-700 text-gray-400" : "bg-[var(--primary-red)] text-white hover:bg-[var(--hover-red)]"}`}
+                            onClick={() =>
+                              handleVote(
+                                candidate._id,
+                                selectedElection._id,
+                                post.title
+                              )
+                            }
+                            className={`w-full mt-2 font-bold rounded-lg px-4 py-2 transition-all duration-200 ${
+                              hasVoted
+                                ? "bg-gray-700 text-gray-400"
+                                : "bg-[var(--primary-red)] text-white hover:bg-[var(--hover-red)]"
+                            }`}
                           >
-                            {voteLoading === voteKey ? "Voting..." : hasVoted ? "Voted" : "Vote"}
+                            {voteLoading === voteKey
+                              ? "Voting..."
+                              : hasVoted
+                              ? "Voted"
+                              : "Vote"}
                           </Button>
                         </div>
                       ))}
