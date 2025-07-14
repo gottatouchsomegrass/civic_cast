@@ -1,24 +1,16 @@
+// src/app/api/users/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import User from "@/model/User";
 import connectToDatabase from "@/lib/mongodb";
 
-type ContextType = {
-  params: {
-    id: string;
-  };
-};
+// This signature directly follows the Next.js documentation for dynamic routes.
+export async function DELETE(
+  _: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
 
-export async function DELETE(_: NextRequest, context: ContextType) {
   try {
-    const { id } = context.params;
-
-    if (!id) {
-      return NextResponse.json(
-        { message: "User ID is required." },
-        { status: 400 }
-      );
-    }
-
     await connectToDatabase();
 
     const userToDelete = await User.findById(id);
