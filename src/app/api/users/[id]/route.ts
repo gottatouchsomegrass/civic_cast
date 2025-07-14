@@ -2,16 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import User from "@/model/User";
 import connectToDatabase from "@/lib/mongodb";
 
-// The function signature must destructure `params` from a context
-// object with an explicitly defined inline type.
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  // `params` is now correctly typed, and `id` is a string.
-  const { id } = params;
+type ContextType = {
+  params: {
+    id: string;
+  };
+};
 
+export async function DELETE(_: NextRequest, context: ContextType) {
   try {
+    const { id } = context.params;
+
+    if (!id) {
+      return NextResponse.json(
+        { message: "User ID is required." },
+        { status: 400 }
+      );
+    }
+
     await connectToDatabase();
 
     const userToDelete = await User.findById(id);
