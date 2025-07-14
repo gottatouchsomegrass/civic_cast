@@ -86,8 +86,18 @@ function RegisterCandidateForm({
           candidateData.message || "Failed to register candidate."
         );
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      console.error("An operation failed:", err);
+
+      let errorMessage = "An unexpected error occurred.";
+
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === "string") {
+        errorMessage = err;
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -215,8 +225,18 @@ export default function ManageCandidatesPage() {
 
         setCandidates(usersData.candidates);
         setElections(electionsData);
-      } catch (error: any) {
-        setError(error.message);
+      } catch (err) {
+        console.error("An operation failed:", err);
+
+        let errorMessage = "An unexpected error occurred.";
+
+        if (err instanceof Error) {
+          errorMessage = err.message;
+        } else if (typeof err === "string") {
+          errorMessage = err;
+        }
+
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }

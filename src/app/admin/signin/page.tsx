@@ -1,31 +1,31 @@
 // app/admin/signin/page.tsx
 "use client";
 
-import { useState } from 'react';
-import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useState } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function AdminSignInPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     if (!email || !password) {
-      setError('Both email and password are required.');
+      setError("Both email and password are required.");
       setLoading(false);
       return;
     }
 
     try {
-      const result = await signIn('credentials', {
+      const result = await signIn("credentials", {
         redirect: false, // We handle the redirect manually
         email,
         password,
@@ -33,13 +33,13 @@ export default function AdminSignInPage() {
 
       if (result?.ok) {
         // On successful sign-in, redirect to the admin dashboard
-        router.push('/admin');
+        router.push("/admin");
       } else {
         // Handle failed sign-in attempt
-        setError(result?.error || 'Invalid email or password.');
+        setError(result?.error || "Invalid email or password.");
       }
     } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
+      setError(`An unexpected error occurred. Please try again. ${err}`);
     } finally {
       setLoading(false);
     }
@@ -56,7 +56,10 @@ export default function AdminSignInPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* --- Form Fields Start Here --- */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-300"
+            >
               Email Address
             </label>
             <div className="mt-1">
@@ -74,7 +77,10 @@ export default function AdminSignInPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-300"
+            >
               Password
             </label>
             <div className="mt-1">
@@ -92,22 +98,27 @@ export default function AdminSignInPage() {
           </div>
           {/* --- Form Fields End Here --- */}
 
-          {error && <p className="text-red-500 text-sm text-center pt-2">{error}</p>}
-          
+          {error && (
+            <p className="text-red-500 text-sm text-center pt-2">{error}</p>
+          )}
+
           <div>
             <button
               type="submit"
               disabled={loading}
               className="w-full flex justify-center mt-4 px-4 py-2 text-lg font-semibold text-white bg-red-600 rounded-md hover:bg-red-700 disabled:bg-red-800 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? 'Signing In...' : 'Sign In'}
+              {loading ? "Signing In..." : "Sign In"}
             </button>
           </div>
         </form>
 
         <p className="text-center text-sm text-gray-400">
-          Need an admin account?{' '}
-          <Link href="/admin/signup" className="font-medium text-red-500 hover:underline">
+          Need an admin account?{" "}
+          <Link
+            href="/admin/signup"
+            className="font-medium text-red-500 hover:underline"
+          >
             Register Here
           </Link>
         </p>

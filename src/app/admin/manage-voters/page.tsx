@@ -44,7 +44,17 @@ function RegisterVoterForm({
         setError(data.message || "Failed to register voter.");
       }
     } catch (err) {
-      setError("An unexpected network error occurred.");
+      console.error("An operation failed:", err);
+
+      let errorMessage = "An unexpected error occurred.";
+
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === "string") {
+        errorMessage = err;
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -109,8 +119,18 @@ export default function ManageVotersPage() {
         if (!res.ok) throw new Error("Could not fetch voter data.");
         const data = await res.json();
         setVoters(data.voters);
-      } catch (error: any) {
-        setError(error.message);
+      } catch (err) {
+        console.error("An operation failed:", err);
+
+        let errorMessage = "An unexpected error occurred.";
+
+        if (err instanceof Error) {
+          errorMessage = err.message;
+        } else if (typeof err === "string") {
+          errorMessage = err;
+        }
+
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }

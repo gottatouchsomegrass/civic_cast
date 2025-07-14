@@ -29,8 +29,18 @@ export default function SignUpPage() {
       if (!res.ok) throw new Error(data.message || "Signup failed");
       toast.success("Account created. Please sign in.");
       router.push("/signin");
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      console.error("An operation failed:", err);
+
+      let errorMessage = "An unexpected error occurred.";
+
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === "string") {
+        errorMessage = err;
+      }
+
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -1,10 +1,17 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import Matter from "matter-js";
 import Link from "next/link";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
+
+// FIX: Create a specific type for DOM elements linked to a physics body.
+// This intersection type avoids 'any' and correctly describes the object.
+type PhysicsEnabledElement = HTMLDivElement & { body?: Matter.Body };
 
 const clamp = (num: number, min: number, max: number) =>
   Math.min(Math.max(num, min), max);
@@ -16,9 +23,9 @@ const PhysicsWord = ({
 }: {
   text: string;
   engine: Matter.Engine;
-  onWordClick: (word: string, element: HTMLDivElement) => void;
+  onWordClick: (word: string, element: PhysicsEnabledElement) => void;
 }) => {
-  const wordRef = useRef<HTMLDivElement>(null);
+  const wordRef = useRef<PhysicsEnabledElement>(null);
 
   useEffect(() => {
     if (!wordRef.current) return;
@@ -32,13 +39,20 @@ const PhysicsWord = ({
     );
 
     Matter.World.add(engine.world, [body]);
-    (wordRef.current as any).body = body;
+    // Safely assign the body to our typed ref.
+    if (wordRef.current) {
+      wordRef.current.body = body;
+    }
   }, [text, engine]);
 
   return (
     <div
       ref={wordRef}
-      onClick={() => onWordClick(text, wordRef.current!)}
+      onClick={() => {
+        if (wordRef.current) {
+          onWordClick(text, wordRef.current);
+        }
+      }}
       className="absolute cursor-pointer select-none whitespace-nowrap rounded-md border border-gray-700 bg-gray-900/50 px-4 py-2 text-xl font-semibold text-gray-200 shadow-lg backdrop-blur-sm transition-colors hover:border-red-500/50 hover:text-white"
     >
       {text}
@@ -57,23 +71,30 @@ const PhysicsSandbox = () => {
     "AboutUs",
   ]);
 
-  const handleWordClick = (word: string, element: HTMLDivElement) => {
-    if (word === "AboutUs") {
-      const body = (element as any).body;
-      if (!body) return;
+  const handleWordClick = useCallback(
+    (word: string, element: PhysicsEnabledElement) => {
+      if (word === "AboutUs") {
+        // FIX: No 'any' needed as 'element' is now correctly typed.
+        const body = element.body;
+        if (!body) return;
 
-      Matter.World.remove(engineRef.current.world, body);
-      setWords((prev) => prev.filter((w) => w !== "AboutUs"));
+        Matter.World.remove(engineRef.current.world, body);
+        setWords((prev) => prev.filter((w) => w !== "AboutUs"));
 
-      setTimeout(() => setWords((prev) => [...prev, "Pyro", "Dipankar"]), 100);
-    }
-  };
+        setTimeout(
+          () => setWords((prev) => [...prev, "Pyro", "Dipankar"]),
+          100
+        );
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     const engine = engineRef.current;
     const world = engine.world;
     const runner = Matter.Runner.create();
-    let render: Matter.Render | null = null;
+    // FIX: Unused 'render' variable has been removed.
 
     if (sceneRef.current) {
       const sceneWidth = sceneRef.current.clientWidth;
@@ -125,10 +146,10 @@ const PhysicsSandbox = () => {
         const sceneHeight = 300;
 
         for (let i = 0; i < wordElements.length; i++) {
-          const el = wordElements[i] as HTMLElement;
-          const body = (el as any).body;
+          // FIX: Assert the element to our specific type, not 'any'.
+          const el = wordElements[i] as PhysicsEnabledElement;
+          const body = el.body;
           if (body) {
-            // --- FIX: Clamp positions to ensure words never escape the container ---
             const clampedX = clamp(
               body.position.x,
               el.offsetWidth / 2,
@@ -164,7 +185,7 @@ const PhysicsSandbox = () => {
   }, []);
 
   return (
-    <div ref={sceneRef} className="relative w-full h-[300px] cursor-grab">
+    <div ref={sceneRef} className="relative h-[300px] w-full cursor-grab">
       {words.map((word) => (
         <PhysicsWord
           key={word}
@@ -199,31 +220,32 @@ export default function Footer() {
   return (
     <footer
       ref={footerRef}
-      className="relative bg-[#080808] text-gray-400 py-16 px-6 z-20 overflow-hidden"
+      className="relative z-20 overflow-hidden bg-[#080808] px-6 py-16 text-gray-400"
     >
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] h-[300px] bg-red-900/30 blur-[150px] rounded-full z-[-1]"></div>
-      <div className="absolute bottom-0 left-1/4 w-[50%] h-[200px] bg-gray-700/20 blur-[120px] rounded-full z-[-1]"></div>
+      <div className="absolute top-0 left-1/2 -z-10 h-[300px] w-[80%] -translate-x-1/2 rounded-full bg-red-900/30 blur-[150px]"></div>
+      <div className="absolute bottom-0 left-1/4 -z-10 h-[200px] w-[50%] rounded-full bg-gray-700/20 blur-[120px]"></div>
 
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-8">
-          <h3 className="text-4xl font-extrabold text-white tracking-tighter">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-8 text-center">
+          <h3 className="text-4xl font-extrabold tracking-tighter text-white">
             An Interactive Democracy
           </h3>
-          <p className="text-lg mt-2 text-gray-400">
-            Drag the words around. Click "AboutUs" for a surprise.
+          {/* FIX: Escaped quotes to resolve react/no-unescaped-entities error. */}
+          <p className="mt-2 text-lg text-gray-400">
+            Drag the words around. Click &quot;AboutUs&quot; for a surprise.
           </p>
         </div>
 
         <PhysicsSandbox />
 
         <nav className="mt-16 border-t border-gray-800/50 pt-12">
-          <ul className="flex flex-col sm:flex-row justify-center items-center gap-6">
+          <ul className="flex flex-col items-center justify-center gap-6 sm:flex-row">
             <li>
               <Link
                 href="/vote"
                 className="group relative inline-block rounded-lg bg-gray-800/50 px-8 py-3 text-lg font-bold text-white transition-all duration-300 hover:bg-gray-800/80"
               >
-                <span className="absolute top-0 left-0 h-full w-0 bg-red-600 rounded-lg transition-all duration-300 group-hover:w-full"></span>
+                <span className="absolute top-0 left-0 h-full w-0 rounded-lg bg-red-600 transition-all duration-300 group-hover:w-full"></span>
                 <span className="relative">Vote Now</span>
               </Link>
             </li>
@@ -239,7 +261,7 @@ export default function Footer() {
           </ul>
         </nav>
 
-        <div className="text-center mt-16 text-gray-600">
+        <div className="mt-16 text-center text-gray-600">
           <p>
             &copy; {new Date().getFullYear()} CivicCast. All Rights Reserved.
           </p>
