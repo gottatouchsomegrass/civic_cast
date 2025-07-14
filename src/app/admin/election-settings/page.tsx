@@ -5,6 +5,7 @@ import React, { useState, useEffect } from "react";
 import type { Election } from "@/types";
 import CreateElectionForm from "@/components/admin/CreateElectionForm";
 import { ListChecks } from "lucide-react";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
 export default function ElectionSettingsPage() {
   const [elections, setElections] = useState<Election[]>([]);
@@ -24,7 +25,13 @@ export default function ElectionSettingsPage() {
     fetchElections();
   }, []);
 
-  if (loading) return <p>Loading election data...</p>;
+  if (loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <LoadingSpinner text="Loading Election Setting..." />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

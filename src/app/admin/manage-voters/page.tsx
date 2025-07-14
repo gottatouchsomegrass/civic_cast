@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import type { User } from "@/types";
 import UserTable from "@/components/admin/UserTable";
 import { UserPlus } from "lucide-react";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
 // A dedicated form for registering a new voter
 function RegisterVoterForm({
@@ -155,12 +156,13 @@ export default function ManageVotersPage() {
     }
   };
 
-  if (loading)
+  if (loading) {
     return (
-      <div className="flex justify-center items-center h-full">
-        <p>Loading voters...</p>
+      <div className="flex h-screen w-full items-center justify-center">
+        <LoadingSpinner text="Loading Voters..." />
       </div>
     );
+  }
   if (error)
     return (
       <div className="flex justify-center items-center h-full">

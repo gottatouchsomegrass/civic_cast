@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, Suspense } from "react";
+import React, { useRef, Suspense, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import {
   Text,
@@ -10,14 +10,14 @@ import {
   Plane,
   Environment,
 } from "@react-three/drei";
-import { Mesh } from "three";
+import { Group } from "three";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 
-function CardMesh() {
-  const groupRef = useRef<Mesh>(null);
+// FIX: CardMesh now accepts a 'scale' prop to control its size.
+function CardMesh({ scale }: { scale: number }) {
+  const groupRef = useRef<Group>(null);
 
-  // Using your specified image URLs
   const profileTexture = useTexture(
     "https://plus.unsplash.com/premium_photo-1689568126014-06fea9d5d341?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
   );
@@ -49,8 +49,9 @@ function CardMesh() {
 
   const Z_OFFSET = 0.051;
 
+  // FIX: The entire group is now scaled based on the passed prop.
   return (
-    <group ref={groupRef}>
+    <group ref={groupRef} scale={scale}>
       <RoundedBox args={[4, 2.5, 0.1]} radius={0.05} smoothness={4}>
         <meshStandardMaterial color="#484848" metalness={0.9} roughness={0.1} />
       </RoundedBox>
@@ -183,20 +184,34 @@ function CardMesh() {
 
 export default function VoterIdCard() {
   const containerRef = useRef<HTMLDivElement>(null);
+  // FIX: Add state to track screen size for responsiveness.
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Animate the container div to fade and scale in slowly after the hero text
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkScreenSize();
+    window.addEventListener("resize", checkScreenSize);
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
+
+  // FIX: Calculate scale and camera FOV based on screen size.
+  const cardScale = isMobile ? 0.75 : 1;
+  const cameraFov = isMobile ? 65 : 50;
+
   useGSAP(
     () => {
       gsap.fromTo(
         containerRef.current,
-        { autoAlpha: 0, y: 120 }, // Start state: invisible and smaller
+        { autoAlpha: 0, y: 120 },
         {
           y: 0,
-          autoAlpha: 1, // End state: fully visible
-          scale: 1, // End state: full size
-          duration: 3, // A longer duration for a "slower" feel
-          ease: "power3.out", // A smooth easing function
-          delay: 1.8, // A longer delay to ensure it starts after the text
+          autoAlpha: 1,
+          scale: 1,
+          duration: 3,
+          ease: "power3.out",
+          delay: 1.8,
         }
       );
     },
@@ -204,12 +219,12 @@ export default function VoterIdCard() {
   );
 
   return (
-    // Add the ref and centering classes to the container
     <div
       ref={containerRef}
-      className="w-full h-[500px] cursor-grab flex justify-center items-center invisible"
+      // FIX: Use responsive height for the container.
+      className="invisible flex h-[400px] w-full cursor-grab items-center justify-center md:h-[500px]"
     >
-      <Canvas camera={{ position: [0, 0, 4.5], fov: 50 }}>
+      <Canvas camera={{ position: [0, 0, 4.5], fov: cameraFov }}>
         <ambientLight intensity={0.6} />
         <directionalLight position={[-5, 5, 10]} intensity={1} />
         <directionalLight
@@ -221,7 +236,8 @@ export default function VoterIdCard() {
           <Environment preset="park" environmentIntensity={0.8} />
         </Suspense>
         <Suspense fallback={null}>
-          <CardMesh />
+          {/* FIX: Pass the dynamic scale to the mesh component. */}
+          <CardMesh scale={cardScale} />
         </Suspense>
         <OrbitControls
           enableZoom={false}

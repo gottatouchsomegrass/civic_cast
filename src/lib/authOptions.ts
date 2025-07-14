@@ -1,85 +1,75 @@
-// ./src/app/api/auth/[...nextauth]/options.ts
+// ./src/lib/authOptions.ts (Recommended new location)
 
-import { NextAuthOptions, User as NextAuthUser } from "next-auth";
+import { NextAuthOptions } from "next-auth";
+import { MongoDBAdapter } from "@auth/mongodb-adapter"; // FIX: Import the adapter
+import clientPromise from "@/lib/mongodb-client"; // FIX: Import the client promise
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import dbConnect from "@/lib/mongodb";
 import User from "@/model/User";
+import { Adapter } from "next-auth/adapters";
 
 export const authOptions: NextAuthOptions = {
+  // Use MongoDB to store session and user data
+  adapter: MongoDBAdapter(clientPromise) as Adapter,
+
   providers: [
     CredentialsProvider({
-      id: "credentials",
       name: "Credentials",
       credentials: {
-        email: {
-          label: "Email",
-          type: "email",
-          placeholder: "example@xyz.com",
-        },
+        email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials): Promise<NextAuthUser | null> {
-        await dbConnect();
-        try {
-          const user = await User.findOne({ email: credentials?.email });
-
-          if (!user) {
-            throw new Error("No user found with the provided email.");
-          }
-
-          const isPasswordValid = await bcrypt.compare(
-            credentials?.password || "",
-            user.password
-          );
-
-          if (isPasswordValid) {
-            return {
-              id: user._id.toString(),
-              email: user.email,
-              name: user.name,
-              isVerified: user.isVerified,
-            };
-          } else {
-            throw new Error("Invalid password.");
-          }
-        } catch (error) {
-          if (error instanceof Error) {
-            throw new Error(error.message);
-          }
-          throw new Error("An unknown error occurred during authorization.");
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials.password) {
+          throw new Error("Missing credentials");
         }
+        await dbConnect();
+        const user = await User.findOne({ email: credentials.email });
+
+        if (
+          !user ||
+          !(await bcrypt.compare(credentials.password, user.password))
+        ) {
+          return null;
+        }
+
+        // Return an object that matches the extended User type
+        return {
+          id: user._id.toString(),
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        };
       },
     }),
   ],
+
+  session: {
+    strategy: "jwt",
+  },
+
   callbacks: {
-    // FIX: Removed unused 'account' and 'profile' parameters.
+    // FIX: The 'user' object now correctly includes 'role' thanks to type augmentation
     async jwt({ token, user }) {
       if (user) {
-        // Now using the custom properties defined in our type declaration file.
-        token._id = user.id;
-        token.isVerified = user.isVerified; // Cast needed if not in default User
-        token.email = user.email;
-        token.name = user.name;
+        token.id = user.id;
+        token.role = user.role;
       }
       return token;
     },
+    // FIX: Type assertions are no longer needed
     async session({ session, token }) {
-      if (token) {
-        session.user._id = token._id;
-        session.user.isVerified = token.isVerified;
-        session.user.email = token.email;
-        session.user.name = token.name;
+      if (session?.user) {
+        session.user._id = token.id as string;
+        session.user.role = token.role as "admin" | "voter" | "candidate";
       }
       return session;
     },
   },
+
   pages: {
     signIn: "/signin",
-    signOut: "/signout",
-  },
-  session: {
-    strategy: "jwt",
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
