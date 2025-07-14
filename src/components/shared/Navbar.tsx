@@ -16,10 +16,8 @@ export default function Navbar() {
   const { data: session } = useSession();
   const isSignedIn = !!session?.user;
 
-  // FIX: 'navLinks' now always includes the core navigation links.
   const navLinks = [{ href: "/election", label: "Vote Now", isButton: false }];
 
-  // GSAP animations and useEffect for body scroll lock remain the same.
   useGSAP(
     () => {
       gsap.fromTo(
@@ -65,7 +63,8 @@ export default function Navbar() {
   return (
     <header
       ref={container}
-      className="relative z-50 flex items-center justify-between border-b border-gray-800 bg-[var(--background-dark)] px-6 py-6 shadow md:px-10"
+      // FIX: The background, border, and shadow are removed for a clean, transparent look.
+      className="relative z-50 flex items-center justify-between px-6 py-6 md:px-10 crazy-nav"
     >
       {/* Logo */}
       <div className="logo">
@@ -79,18 +78,15 @@ export default function Navbar() {
 
       {/* Desktop Navigation */}
       <nav className="hidden items-center gap-8 text-lg md:flex">
-        {/* Render static links first */}
         {navLinks.map((link) => (
           <Link
             key={link.href}
             href={link.href}
-            className="nav-link-desktop transition-colors hover:text-[var(--primary-red)] font-semibold"
+            className="nav-link-desktop font-semibold text-white transition-colors hover:text-[var(--primary-red)]"
           >
             {link.label}
           </Link>
         ))}
-
-        {/* FIX: Conditionally render the authentication button */}
         {isSignedIn ? (
           <button
             onClick={() => signOut({ callbackUrl: "/signin" })}
@@ -124,7 +120,7 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Menu Overlay (retains its background for readability) */}
       {isMenuOpen && (
         <div className="fixed top-0 left-0 z-50 flex h-screen w-full flex-col bg-[#080808]/95 backdrop-blur-lg md:hidden">
           <div className="flex items-center justify-between border-b border-gray-800 p-6">
@@ -144,7 +140,6 @@ export default function Navbar() {
             </button>
           </div>
           <nav className="flex flex-1 flex-col items-center justify-center gap-10 text-2xl">
-            {/* Render static links */}
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -155,7 +150,6 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
-            {/* FIX: Conditionally render the authentication button for mobile */}
             {isSignedIn ? (
               <button
                 onClick={() => {

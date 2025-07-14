@@ -1,52 +1,65 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Election, User } from "@/types";
 import { Button } from "@/components/ui/button";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import Image from "next/image";
+import Confetti from "react-confetti";
+import { ArrowLeft, Check, Loader2, Users, Circle } from "lucide-react";
 import Navbar from "@/components/shared/Navbar";
+import { gsap } from "gsap";
+import { useGSAP } from "@gsap/react";
+import CandidateVoteCard from "@/components/election/CandidateCard"; // Correctly import the new component
 
-interface Candidate extends User {
-  profilePicture?: string;
-}
-
-type VotedMap = Record<string, boolean>; // key: `${electionId}_${post}`
+const getElectionStatus = (startDate: Date, endDate: Date) => {
+  const now = new Date();
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  if (now < start) return { text: "Upcoming", color: "text-blue-400" };
+  if (now > end) return { text: "Completed", color: "text-gray-500" };
+  return { text: "Ongoing", color: "text-green-400" };
+};
 
 export default function ElectionPage() {
   const { data: session } = useSession();
   const voterId = session?.user?._id;
 
+  // --- State Management ---
   const [elections, setElections] = useState<Election[]>([]);
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [candidates, setCandidates] = useState<User[]>([]);
   const [selectedElection, setSelectedElection] = useState<Election | null>(
     null
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [voted, setVoted] = useState<VotedMap>({});
-  const [voteLoading, setVoteLoading] = useState<string | null>(null); // key: `${electionId}_${post}`
+  const [userVotesForElection, setUserVotesForElection] = useState<
+    Record<string, boolean>
+  >({});
+  const [voteLoading, setVoteLoading] = useState<string | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
 
-  const normalize = (str: string) => str.trim().toLowerCase();
+  // --- Refs for GSAP Animation ---
+  const mainContainer = useRef(null);
+  const electionGridRef = useRef(null);
+  const postsViewRef = useRef(null);
 
+  // --- Data Fetching Logic ---
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      setError(null);
       try {
         const [electionsRes, usersRes] = await Promise.all([
           fetch("/api/elections"),
           fetch("/api/users"),
         ]);
         if (!electionsRes.ok || !usersRes.ok)
-          throw new Error("Failed to fetch data");
-        const electionsData = await electionsRes.json();
-        const usersData = await usersRes.json();
-        setElections(electionsData);
-        setCandidates(usersData.candidates);
-      } catch {
-        setError("Failed to load elections or candidates.");
+          throw new Error("Failed to fetch essential data.");
+        setElections(await electionsRes.json());
+        setCandidates((await usersRes.json()).candidates || []);
+      } catch (err) {
+        setError(`Failed to load election data. ${err}`);
       } finally {
         setLoading(false);
       }
@@ -54,51 +67,78 @@ export default function ElectionPage() {
     fetchData();
   }, []);
 
-  const fetchAndSetVotes = async (selectedElectionId: string) => {
-    if (!voterId || !selectedElectionId) return;
-    try {
-      const res = await fetch(`/api/users`);
-      if (!res.ok) return;
-      const data = await res.json();
-      const voter = data.voters?.find((v: User) => String(v._id) === String(voterId));
-      // Debug logs
-      console.log("Session voterId:", voterId);
-      console.log("Fetched voter:", voter);
-      console.log("Voter votes:", voter?.votes);
-      console.log("Selected election id:", selectedElectionId);
-      if (voter && Array.isArray(voter.votes)) {
-        const votedMap: VotedMap = {};
-        for (const v of voter.votes) {
-          if (String(v.election) === String(selectedElectionId) && v.post) {
-            votedMap[`${selectedElectionId}_${normalize(v.post)}`] = true;
-          }
-        }
-        setVoted(votedMap);
-      }
-    } catch (err) {
-      console.error("Vote fetch error:", err);
-    }
-  };
-
-  // On election select, fetch user's votes for this election to disable buttons
   useEffect(() => {
-    if (selectedElection) {
-      fetchAndSetVotes(selectedElection._id);
+    if (!selectedElection || !voterId) {
+      setUserVotesForElection({});
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [voterId, selectedElection]);
+    const fetchVotes = async () => {
+      try {
+        const res = await fetch("/api/vote/check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ voterId, electionId: selectedElection._id }),
+        });
+        if (res.ok) setUserVotesForElection(await res.json());
+      } catch (e) {
+        console.error("Could not fetch user's votes:", e);
+      }
+    };
+    fetchVotes();
+  }, [selectedElection, voterId]);
 
+  // --- GSAP Animation Logic ---
+  useGSAP(
+    () => {
+      if (loading) return;
+      if (!selectedElection) {
+        gsap.to(electionGridRef.current, { autoAlpha: 1, duration: 0.4 });
+        gsap.from(".election-card-container", {
+          opacity: 0,
+          y: 40,
+          stagger: 0.1,
+          ease: "power3.out",
+          delay: 0.2,
+        });
+      } else {
+        gsap.to(postsViewRef.current, { autoAlpha: 1, duration: 0.4 });
+        gsap.from(".post-card", {
+          opacity: 0,
+          y: 40,
+          stagger: 0.15,
+          ease: "power3.out",
+          delay: 0.3,
+        });
+      }
+    },
+    { scope: mainContainer, dependencies: [selectedElection, loading] }
+  );
+
+  const handleSelectElection = (election: Election) =>
+    gsap.to(electionGridRef.current, {
+      autoAlpha: 0,
+      y: -40,
+      duration: 0.4,
+      ease: "power3.in",
+      onComplete: () => setSelectedElection(election),
+    });
+  const handleGoBack = () =>
+    gsap.to(postsViewRef.current, {
+      autoAlpha: 0,
+      y: 40,
+      duration: 0.4,
+      ease: "power3.in",
+      onComplete: () => setSelectedElection(null),
+    });
+
+  // --- Core Voting Functionality ---
   const handleVote = async (
     candidateId: string,
     electionId: string,
     post: string
   ) => {
-    if (!voterId) {
-      toast.error("You must be signed in to vote.");
-      return;
-    }
-    const voteKey = `${electionId}_${normalize(post)}`;
-    setVoteLoading(voteKey);
+    if (!voterId) return toast.error("You must be signed in to vote.");
+    setVoteLoading(post);
     try {
       const res = await fetch("/api/vote", {
         method: "POST",
@@ -107,161 +147,187 @@ export default function ElectionPage() {
       });
       await fetchAndSetVotes(electionId); // Always refetch votes after any vote attempt
       if (res.ok) {
+        setUserVotesForElection((prev) => ({ ...prev, [post]: true }));
         toast.success("Vote cast successfully!");
+        setShowConfetti(true);
       } else {
-        if (res.status === 409) {
-          toast.error("You have already voted for this post.");
-        } else {
-          toast.error("Failed to cast vote.");
-        }
+        if (res.status === 409)
+          setUserVotesForElection((prev) => ({ ...prev, [post]: true }));
+        toast.error(data.message || "Failed to cast vote.");
       }
     } catch {
-      toast.error("Failed to cast vote.");
+      toast.error("An error occurred while casting your vote.");
     } finally {
       setVoteLoading(null);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-[var(--background-dark)]">
-        <LoadingSpinner text="Loading elections..." />
-      </div>
-    );
-  }
-  if (error) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-[var(--background-dark)]">
-        <p className="text-[var(--primary-red)] text-lg font-semibold">
-          {error}
-        </p>
-      </div>
-    );
-  }
-
-  // Election options grid
-  if (!selectedElection) {
-    return (
-      <div className="min-h-screen bg-[var(--background-dark)] text-[var(--text-light)]">
-        <Navbar />
-        <div className="px-4 pt-12">
-          <h2 className="text-4xl font-extrabold text-center mb-12 tracking-tight text-[var(--text-light)] drop-shadow-lg">
-            Elections
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 max-w-4xl mx-auto">
-            {elections.map((election) => (
-              <button
-                key={election._id}
-                className="bg-[#181818] border-2 border-transparent rounded-2xl p-10 shadow-xl flex flex-col items-center transition-all duration-200 hover:scale-105 hover:shadow-2xl hover:border-[var(--primary-red)] group focus:outline-none focus:ring-2 focus:ring-[var(--primary-red)]"
-                onClick={() => setSelectedElection(election)}
-                style={{ minHeight: 180 }}
-              >
-                <span className="text-2xl font-bold mb-2 text-[var(--primary-red)] group-hover:text-[var(--hover-red)] transition-colors duration-200 drop-shadow">
-                  {election.title}
-                </span>
-                <span className="text-gray-400 text-base text-center mt-2">
-                  {election.description}
-                </span>
-              </button>
-            ))}
-          </div>
+  // --- Main Render Function ---
+  const renderContent = () => {
+    if (loading)
+      return (
+        <div className="flex flex-col h-[80vh] w-full items-center justify-center text-white">
+          <Loader2 className="h-8 w-8 animate-spin text-red-500 mb-4" />
+          <p>Loading Elections...</p>
         </div>
-      </div>
-    );
-  }
-
-  // Posts and candidates for selected election
-  return (
-    <div className="min-h-screen bg-[var(--background-dark)] text-[var(--text-light)]">
-      <Navbar />
-      <div className="max-w-5xl mx-auto px-4 pt-12">
-        <div className="mb-10 flex items-center gap-4">
-          <Button
-            variant="ghost"
-            onClick={() => setSelectedElection(null)}
-            className="text-[var(--primary-red)] hover:text-[var(--hover-red)] font-semibold px-4 py-2 rounded-lg border border-[var(--primary-red)] bg-transparent"
-          >
-            ← Back to Elections
-          </Button>
-          <h2 className="text-3xl font-extrabold text-[var(--text-light)] ml-2 tracking-tight drop-shadow-lg">
-            {selectedElection.title} Election Posts
-          </h2>
+      );
+    if (error)
+      return (
+        <div className="flex h-[80vh] w-full items-center justify-center text-white">
+          <p className="text-red-400 text-center">{error}</p>
         </div>
-        {selectedElection.posts.length === 0 ? (
-          <p className="text-gray-400">No posts found for this election.</p>
-        ) : (
-          <div className="space-y-12">
-            {selectedElection.posts.map((post) => {
-              const postCandidates = candidates.filter(
-                (c) =>
-                  c.election?.["_id"] === selectedElection._id &&
-                  c.electionPost === post.title
+      );
+    return (
+      <div className="relative w-full min-h-[calc(100vh-150px)]">
+        <div
+          ref={electionGridRef}
+          className={`w-full max-w-5xl mx-auto py-16 ${
+            selectedElection ? "invisible absolute" : "visible"
+          }`}
+        >
+          <h1 className="text-4xl md:text-6xl font-extrabold mb-4 text-center text-white">
+            Your Voice, <span className="text-red-500">Your Vote.</span>
+          </h1>
+          <p className="text-lg text-gray-400 text-center mb-12">
+            Select an active election to cast your vote and make a difference.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+            {elections.map((election) => {
+              const status = getElectionStatus(
+                election.startDate,
+                election.endDate
               );
-              const voteKey = `${selectedElection._id}_${normalize(post.title)}`;
-              const hasVoted = voted[voteKey];
               return (
                 <div
-                  key={post._id}
-                  className="bg-[#181818] p-8 rounded-2xl border-2 border-gray-800 shadow-xl"
+                  key={election._id}
+                  className="election-card-container revolving-border-container"
                 >
-                  <h3 className="text-2xl font-bold text-[var(--primary-red)] mb-6 tracking-tight drop-shadow">
-                    {post.title} Candidates
-                  </h3>
-                  {postCandidates.length === 0 ? (
-                    <p className="text-gray-400">
-                      No candidates registered for this post.
-                    </p>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-                      {postCandidates.map((candidate) => (
-                        <div
-                          key={candidate._id}
-                          className="flex flex-col items-center bg-[#101010] rounded-xl p-6 border-2 border-gray-700 shadow-lg transition-all duration-200 hover:scale-105 hover:border-[var(--primary-red)] group"
-                        >
-                          <Image
-                            src={candidate.profilePicture || "/file.svg"}
-                            alt={candidate.name}
-                            width={80}
-                            height={80}
-                            className="w-20 h-20 rounded-full object-cover mb-3 border-2 border-[var(--primary-red)] group-hover:border-[var(--hover-red)] transition-colors duration-200 shadow"
-                          />
-                          <span className="text-[var(--text-light)] font-semibold text-lg mb-1 text-center drop-shadow">
-                            {candidate.name}
-                          </span>
-                          <span className="text-gray-400 text-sm mb-3 text-center">
-                            {candidate.email}
-                          </span>
-                          <Button
-                            disabled={hasVoted || voteLoading === voteKey}
-                            onClick={() =>
+                  <button
+                    className="revolving-border-card w-full p-8 flex flex-col items-center text-center group"
+                    onClick={() => handleSelectElection(election)}
+                  >
+                    <div className="absolute top-4 right-4 flex items-center gap-2 text-xs font-semibold">
+                      <Circle
+                        className={`${status.color} fill-current`}
+                        size={8}
+                      />
+                      <span className={status.color}>{status.text}</span>
+                    </div>
+                    <div className="mb-5 text-red-500/80 group-hover:text-red-500 transition-colors">
+                      <Users size={48} strokeWidth={1.5} />
+                    </div>
+                    <span className="text-xl font-bold text-white mb-2">
+                      {election.title}
+                    </span>
+                    <span className="text-gray-400 text-sm font-light">
+                      {election.description}
+                    </span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {selectedElection && (
+          <div
+            ref={postsViewRef}
+            className={`w-full max-w-7xl mx-auto py-8 ${
+              !selectedElection ? "invisible absolute" : "visible"
+            }`}
+          >
+            <div className="mb-10 flex items-center justify-between">
+              <Button
+                variant="outline"
+                onClick={handleGoBack}
+                className="border-gray-600 bg-transparent text-gray-300 hover:bg-gray-800 hover:text-white flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" /> Back
+              </Button>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white text-right">
+                {selectedElection.title}
+              </h2>
+            </div>
+            <div className="space-y-16">
+              {selectedElection.posts.map((post) => {
+                const postCandidates = candidates.filter(
+                  (c) =>
+                    c.election?._id === selectedElection._id &&
+                    c.electionPost === post.title
+                );
+                const hasVoted = userVotesForElection[post.title];
+                const isElectionOngoing =
+                  getElectionStatus(
+                    selectedElection.startDate,
+                    selectedElection.endDate
+                  ).text === "Ongoing";
+                return (
+                  <div
+                    key={post._id}
+                    className="post-card bg-[#111113] p-8 rounded-2xl border border-white/10"
+                  >
+                    <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-800">
+                      <h3 className="text-3xl font-semibold text-white">
+                        {post.title}
+                      </h3>
+                      {hasVoted && (
+                        <div className="flex items-center gap-2 text-green-400 bg-green-500/10 px-3 py-1 rounded-full text-sm font-medium">
+                          <Check className="h-4 w-4" /> Voted
+                        </div>
+                      )}
+                    </div>
+                    {postCandidates.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {postCandidates.map((candidate) => (
+                          <CandidateVoteCard
+                            key={candidate._id}
+                            candidate={candidate}
+                            hasVoted={hasVoted || !isElectionOngoing}
+                            isVoting={voteLoading === post.title}
+                            onVote={() =>
                               handleVote(
                                 candidate._id,
                                 selectedElection._id,
                                 post.title
                               )
                             }
-                            className={`w-full mt-2 font-bold rounded-lg px-4 py-2 transition-all duration-200 ${
-                              hasVoted
-                                ? "bg-gray-700 text-gray-400"
-                                : "bg-[var(--primary-red)] text-white hover:bg-[var(--hover-red)]"
-                            }`}
-                          >
-                            {voteLoading === voteKey
-                              ? "Voting..."
-                              : hasVoted
-                              ? "Voted"
-                              : "Vote"}
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-400 text-center py-4">
+                        No candidates have registered for this post yet.
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
+    );
+  };
+
+  return (
+    <div
+      ref={mainContainer}
+      className="min-h-screen w-full bg-[#0A0A0A] text-white"
+    >
+      <Navbar />
+      <main className="px-4 sm:px-8">
+        {showConfetti && (
+          <Confetti
+            width={window.innerWidth}
+            height={window.innerHeight}
+            recycle={false}
+            numberOfPieces={400}
+            gravity={0.1}
+            onConfettiComplete={() => setShowConfetti(false)}
+          />
+        )}
+        {renderContent()}
+      </main>
     </div>
   );
 }
