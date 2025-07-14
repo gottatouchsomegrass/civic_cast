@@ -29,6 +29,8 @@ export default function ElectionPage() {
   const [voted, setVoted] = useState<VotedMap>({});
   const [voteLoading, setVoteLoading] = useState<string | null>(null); // key: `${electionId}_${post}`
 
+  const normalize = (str: string) => str.trim().toLowerCase();
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -58,17 +60,24 @@ export default function ElectionPage() {
       const res = await fetch(`/api/users`);
       if (!res.ok) return;
       const data = await res.json();
-      const voter = data.voters?.find((v: User) => v._id === voterId);
+      const voter = data.voters?.find((v: User) => String(v._id) === String(voterId));
+      // Debug logs
+      console.log("Session voterId:", voterId);
+      console.log("Fetched voter:", voter);
+      console.log("Voter votes:", voter?.votes);
+      console.log("Selected election id:", selectedElectionId);
       if (voter && Array.isArray(voter.votes)) {
         const votedMap: VotedMap = {};
         for (const v of voter.votes) {
-          if (v.election === selectedElectionId) {
-            votedMap[`${v.election}_${v.post}`] = true;
+          if (String(v.election) === String(selectedElectionId) && v.post) {
+            votedMap[`${selectedElectionId}_${normalize(v.post)}`] = true;
           }
         }
         setVoted(votedMap);
       }
-    } catch {}
+    } catch (err) {
+      console.error("Vote fetch error:", err);
+    }
   };
 
   // On election select, fetch user's votes for this election to disable buttons
@@ -88,7 +97,7 @@ export default function ElectionPage() {
       toast.error("You must be signed in to vote.");
       return;
     }
-    const voteKey = `${electionId}_${post}`;
+    const voteKey = `${electionId}_${normalize(post)}`;
     setVoteLoading(voteKey);
     try {
       const res = await fetch("/api/vote", {
@@ -96,16 +105,14 @@ export default function ElectionPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ voterId, candidateId, electionId, post }),
       });
-      const data = await res.json();
+      await fetchAndSetVotes(electionId); // Always refetch votes after any vote attempt
       if (res.ok) {
-        await fetchAndSetVotes(electionId); // Refetch votes after voting
         toast.success("Vote cast successfully!");
       } else {
         if (res.status === 409) {
-          await fetchAndSetVotes(electionId); // Refetch votes if already voted
-          toast.error(data.message || "You have already voted for this post.");
+          toast.error("You have already voted for this post.");
         } else {
-          toast.error(data.message || "Failed to cast vote.");
+          toast.error("Failed to cast vote.");
         }
       }
     } catch {
@@ -190,7 +197,7 @@ export default function ElectionPage() {
                   c.election?.["_id"] === selectedElection._id &&
                   c.electionPost === post.title
               );
-              const voteKey = `${selectedElection._id}_${post.title}`;
+              const voteKey = `${selectedElection._id}_${normalize(post.title)}`;
               const hasVoted = voted[voteKey];
               return (
                 <div
