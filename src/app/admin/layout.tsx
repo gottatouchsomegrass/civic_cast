@@ -10,7 +10,7 @@ export default async function AdminDashboardLayout({
     <div className="min-h-screen bg-[#101010] text-gray-200">
       <Sidebar />
 
-      <main className="lg:ml-32">
+      <main className="lg:ml-64">
         <div className="p-4 sm:p-6 lg:p-8">{children}</div>
       </main>
     </div>
