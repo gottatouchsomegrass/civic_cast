@@ -1,19 +1,27 @@
-// app/api/users/[id]/route.ts
+// src/app/api/users/[id]/route.ts
 import { NextResponse } from "next/server";
 import User from "@/model/User";
 import connectToDatabase from "@/lib/mongodb";
 
-// The handler receives two arguments: the request and a context object.
-// We only need the context object, so we can ignore the first argument.
+// The route handler receives the request and a context object.
+// The context object contains the dynamic route parameters.
 export async function DELETE(
-  _request: Request, // The first argument is the Request object, ignored here
-  { params }: { params: { id: string } } // The second argument contains the typed params
+  _request: Request,
+  context: { params: { id: string } }
 ) {
+  // Destructure the id from the context object's params property.
+  const { id } = context.params;
+
   try {
     await connectToDatabase();
 
-    // Now 'params.id' is known to be a string.
-    await User.findByIdAndDelete(params.id);
+    // Check if the user exists before attempting to delete
+    const userToDelete = await User.findById(id);
+    if (!userToDelete) {
+      return NextResponse.json({ message: "User not found." }, { status: 404 });
+    }
+
+    await User.findByIdAndDelete(id);
 
     return NextResponse.json(
       { message: "User deleted successfully" },
@@ -21,10 +29,13 @@ export async function DELETE(
     );
   } catch (error) {
     console.error("Error deleting user:", error);
-    let errorMessage = "An unexpected error occurred.";
+
+    let errorMessage = "An unexpected error occurred while deleting the user.";
     if (error instanceof Error) {
-      errorMessage = error.message;
+      // Avoid exposing internal details in production
+      errorMessage = "Could not process the delete request.";
     }
+
     return NextResponse.json({ message: errorMessage }, { status: 500 });
   }
 }
