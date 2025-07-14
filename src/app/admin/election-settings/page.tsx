@@ -6,15 +6,19 @@ import type { Election } from "@/types";
 import CreateElectionForm from "@/components/admin/CreateElectionForm";
 import { ListChecks } from "lucide-react";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { useSession } from "next-auth/react";
 
 export default function ElectionSettingsPage() {
+  const { data: session } = useSession();
+  const adminId = session?.user?._id;
   const [elections, setElections] = useState<Election[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!adminId) return;
     const fetchElections = async () => {
       try {
-        const res = await fetch("/api/elections");
+        const res = await fetch(`/api/elections?adminId=${adminId}`);
         setElections(await res.json());
       } catch (error) {
         console.error("Failed to fetch elections", error);
@@ -23,7 +27,7 @@ export default function ElectionSettingsPage() {
       }
     };
     fetchElections();
-  }, []);
+  }, [adminId]);
 
   if (loading) {
     return (

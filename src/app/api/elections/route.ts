@@ -3,10 +3,13 @@ import { NextResponse } from "next/server";
 import Election from "@/model/Election";
 import connectToDatabase from "@/lib/mongodb";
 
-// GET all elections
-export async function GET() {
+// GET all elections (optionally filter by adminId)
+export async function GET(request: Request) {
   await connectToDatabase();
-  const elections = await Election.find({}).sort({ createdAt: -1 });
+  const url = new URL(request.url);
+  const adminId = url.searchParams.get("adminId");
+  const filter = adminId ? { createdBy: adminId } : {};
+  const elections = await Election.find(filter).sort({ createdAt: -1 });
   return NextResponse.json(elections);
 }
 
@@ -15,7 +18,12 @@ export async function POST(request: Request) {
   try {
     await connectToDatabase();
     const body = await request.json();
-    const newElection = new Election(body);
+    // Assume adminId is sent in the request body (should be set from session in real app)
+    const { adminId, ...electionData } = body;
+    if (!adminId) {
+      return NextResponse.json({ message: "Missing adminId (creator) for election." }, { status: 400 });
+    }
+    const newElection = new Election({ ...electionData, createdBy: adminId });
     await newElection.save();
     return NextResponse.json(newElection, { status: 201 });
   } catch (error) {
