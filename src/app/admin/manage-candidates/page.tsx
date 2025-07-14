@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import type { User, Election } from "@/types";
 import UserTable from "@/components/admin/UserTable";
 import { UserPlus, Upload } from "lucide-react";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
 // The form is now updated to handle file uploads
 function RegisterCandidateForm({
@@ -255,12 +256,13 @@ export default function ManageCandidatesPage() {
     }
   };
 
-  if (loading)
+  if (loading) {
     return (
-      <div className="flex justify-center items-center h-full">
-        <p>Loading...</p>
+      <div className="flex h-screen w-full items-center justify-center">
+        <LoadingSpinner text="Loading Candidates..." />
       </div>
     );
+  }
   if (error)
     return (
       <div className="flex justify-center items-center h-full">

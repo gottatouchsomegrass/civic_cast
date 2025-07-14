@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import type { User, Election } from "@/types";
 import { BarChart3 } from "lucide-react";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
 // A component to display the results for a single candidate
 function CandidateResult({
@@ -120,12 +121,13 @@ export default function ResultsPage() {
     };
   }, [selectedElectionId, elections, candidates]);
 
-  if (loading)
+  if (loading) {
     return (
-      <div className="flex justify-center items-center h-full">
-        <p>Loading results...</p>
+      <div className="flex h-screen w-full items-center justify-center">
+        <LoadingSpinner text="Loading results..." />
       </div>
     );
+  }
   if (error)
     return (
       <div className="flex justify-center items-center h-full">

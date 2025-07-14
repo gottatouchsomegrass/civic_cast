@@ -15,6 +15,7 @@ import CustomSelect from "@/components/admin/CustomSelect";
 
 // Import icons for use in the dashboard
 import { Users, UserPlus, CheckSquare, Vote, ArrowRight } from "lucide-react";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
 // FIX: Define a specific interface for the dashboard statistics object.
 // This eliminates the 'any' type and provides full type safety.
@@ -104,12 +105,11 @@ export default function AdminDashboardPage() {
   // --- Conditional Rendering ---
   if (loading) {
     return (
-      <div className="flex h-full w-full items-center justify-center">
-        <p className="text-gray-400">Loading Dashboard...</p>
+      <div className="flex h-screen w-full items-center justify-center">
+        <LoadingSpinner text="Loading Dashboard..." />
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="flex h-full w-full items-center justify-center">
