@@ -73,23 +73,16 @@ export default function ResultsPage() {
           setSelectedElectionId(electionsData[0]._id);
         }
       } catch (err) {
-        // Step 1: Always log the full, raw error object for debugging purposes.
-        // This is the most important step for you as a developer.
         console.error("An operation failed:", err);
 
         let errorMessage = "An unexpected error occurred.";
 
-        // Step 2: Use type guards to safely determine what 'err' is.
         if (err instanceof Error) {
-          // This is the ideal case. We know 'err' has a 'message' property.
           errorMessage = err.message;
         } else if (typeof err === "string") {
-          // If a plain string was thrown, we can use it directly.
           errorMessage = err;
         }
-        // For any other type (null, number, plain object), the default message remains.
 
-        // Step 3: Set the state with the safe, determined error message.
         setError(errorMessage);
       } finally {
         setLoading(false);
