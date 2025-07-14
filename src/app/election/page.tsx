@@ -145,7 +145,7 @@ export default function ElectionPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ voterId, candidateId, electionId, post }),
       });
-      await fetchAndSetVotes(electionId); // Always refetch votes after any vote attempt
+      const data = await res.json();
       if (res.ok) {
         setUserVotesForElection((prev) => ({ ...prev, [post]: true }));
         toast.success("Vote cast successfully!");
