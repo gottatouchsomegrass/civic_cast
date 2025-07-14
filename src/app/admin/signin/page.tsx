@@ -46,7 +46,7 @@ export default function AdminSignInPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-[#0a0a0a]">
+    <div className="flex items-center justify-center lg:-ml-64 min-h-screen bg-[#0a0a0a]">
       <div className="w-full max-w-md p-8 space-y-6 bg-[#121212] rounded-lg shadow-lg border border-gray-800">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-white">Admin Portal</h1>
