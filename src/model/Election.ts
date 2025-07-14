@@ -1,32 +1,29 @@
-// models/Election.ts
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema, Document, models, Model } from "mongoose";
 
-// FIX: Simplified PostSchema to only contain a title
-const PostSchema = new Schema({
-  title: {
-    type: String,
-    required: true,
-  },
+export interface IPost {
+  title: string;
+}
+
+export interface IElection extends Document {
+  title: string;
+  description: string;
+  posts: IPost[];
+  startDate: Date;
+  endDate: Date;
+  status: "pending" | "active" | "completed";
+}
+
+const PostSchema: Schema<IPost> = new Schema({
+  title: { type: String, required: true },
 });
 
-const ElectionSchema = new Schema(
+const ElectionSchema: Schema<IElection> = new Schema(
   {
-    title: {
-      type: String,
-      required: true,
-    },
-    description: {
-      type: String,
-    },
-    posts: [PostSchema], // An array of posts, each with just a title
-    startDate: {
-      type: Date,
-      required: true,
-    },
-    endDate: {
-      type: Date,
-      required: true,
-    },
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    posts: [PostSchema],
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
     status: {
       type: String,
       enum: ["pending", "active", "completed"],
@@ -36,5 +33,7 @@ const ElectionSchema = new Schema(
   { timestamps: true }
 );
 
-export default mongoose.models.Election ||
-  mongoose.model("Election", ElectionSchema);
+const Election: Model<IElection> =
+  models.Election || mongoose.model<IElection>("Election", ElectionSchema);
+
+export default Election;

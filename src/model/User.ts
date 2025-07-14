@@ -1,32 +1,37 @@
-// models/User.ts
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema, Document, models, Model } from "mongoose";
 
-const userSchema = new Schema(
+export interface IUser extends Document {
+  name: string;
+  email: string;
+  password?: string;
+  isVerified: boolean;
+  role: "admin" | "voter" | "candidate";
+  profilePicture?: string;
+  election?: Schema.Types.ObjectId;
+  electionPost?: string;
+  voteCount: number;
+}
+
+const UserSchema: Schema<IUser> = new Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+    password: { type: String, required: true, select: false }, // Hide password by default
     isVerified: { type: Boolean, default: false },
     role: {
       type: String,
       enum: ["admin", "voter", "candidate"],
       default: "voter",
     },
-
-    // --- Candidate-Specific Fields ---
-    profilePicture: { type: String }, // Requirement will be handled in the API
-    election: { type: Schema.Types.ObjectId, ref: "Election" }, // Link to a specific election
+    profilePicture: { type: String },
+    election: { type: Schema.Types.ObjectId, ref: "Election" },
     electionPost: { type: String },
     voteCount: { type: Number, default: 0 },
-
-    votes: [
-      {
-        election: { type: Schema.Types.ObjectId, ref: "Election" },
-        candidate: { type: Schema.Types.ObjectId, ref: "User" },
-      },
-    ],
   },
   { timestamps: true }
 );
 
-export default mongoose.models.User || mongoose.model("User", userSchema);
+const User: Model<IUser> =
+  models.User || mongoose.model<IUser>("User", UserSchema);
+
+export default User;

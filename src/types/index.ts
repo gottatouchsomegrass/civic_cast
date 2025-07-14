@@ -1,39 +1,29 @@
-export type ElectionStatus = "Ongoing" | "Completed" | "Upcoming";
-
-// A type for the nested Post object
-export interface Post {
-  _id: string;
-  title: string;
+export interface Vote {
+  election: string;
+  post: string;
+  candidate: string;
+  votedAt: Date;
 }
 
-// The main type for an Election document
 export interface Election {
-  _id: string; // Provided by MongoDB
+  _id: string;
   title: string;
-  description?: string; // Optional field
-  posts: Post[];
+  description?: string;
+  posts: { _id: string; title: string }[];
   startDate: Date;
   endDate: Date;
-  status: "pending" | "active" | "completed"; // Enum maps to a union type
-  createdAt?: Date;
-  updatedAt?: Date;
+  status: "pending" | "active" | "completed";
 }
 
 export interface User {
   _id: string;
   name: string;
   email: string;
-
   role?: "admin" | "voter" | "candidate";
   isVerified?: boolean;
   profilePicture?: string;
-  electionPost?: string;
+  electionPost?: string; // If the user is a candidate for a specific post
   voteCount?: number;
-  votes?: {
-    election: string; // Corresponds to an Election's _id
-    candidate: string; // Corresponds to a User's _id
-  }[];
-  createdAt?: string; // ISO date string
-  updatedAt?: string; // ISO date string
-  election?: Election;
+  votes: Vote[]; // The user's voting history
+  election?: Election; // If the user is a candidate in a specific election
 }

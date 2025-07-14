@@ -33,7 +33,11 @@ export async function middleware(request: NextRequest) {
   }
 
   // --- Protect General Content Pages ---
-  if (!token && (url.pathname.startsWith("/dashboard") || url.pathname.startsWith("/election"))) {
+  if (
+    !token &&
+    (url.pathname.startsWith("/dashboard") ||
+      url.pathname.startsWith("/election"))
+  ) {
     return NextResponse.redirect(new URL("/signin", request.url));
   }
 
@@ -48,6 +52,6 @@ export const config = {
     "/signup",
     "/signout",
     "/admin/:path*",
-    "/election" // Add the admin route to the matcher
+    "/election", // Add the admin route to the matcher
   ],
 };
