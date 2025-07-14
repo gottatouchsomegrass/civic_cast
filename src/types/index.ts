@@ -13,6 +13,8 @@ export interface Election {
   startDate: Date;
   endDate: Date;
   status: "pending" | "active" | "completed";
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface User {
@@ -25,5 +27,7 @@ export interface User {
   electionPost?: string; // If the user is a candidate for a specific post
   voteCount?: number;
   votes: Vote[]; // The user's voting history
-  election?: Election; // If the user is a candidate in a specific election
+  election?: Election;
+  createdAt?: Date;
+  updatedAt?: Date; // If the user is a candidate in a specific election
 }
