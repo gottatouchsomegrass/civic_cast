@@ -33,7 +33,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // --- Protect General Content Pages ---
-  if (!token && url.pathname.startsWith("/dashboard")) {
+  if (!token && (url.pathname.startsWith("/dashboard") || url.pathname.startsWith("/election"))) {
     return NextResponse.redirect(new URL("/signin", request.url));
   }
 
