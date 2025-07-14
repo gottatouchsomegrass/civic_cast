@@ -1,23 +1,22 @@
-// types/index.ts
-
-/**
- * Represents the complete User object, aligned with your Mongoose schema.
- * This can be used for admins, voters, and candidates.
- */
-
-/**
- * Represents an Election object, aligned with your Mongoose schema.
- */
 export type ElectionStatus = "Ongoing" | "Completed" | "Upcoming";
 
-export interface Election {
+// A type for the nested Post object
+export interface Post {
   _id: string;
   title: string;
-  description?: string;
-  candidates: string[]; // An array of User IDs
-  startDate: string; // ISO date string
-  endDate: string;
-  status: ElectionStatus; // ISO date string
+}
+
+// The main type for an Election document
+export interface Election {
+  _id: string; // Provided by MongoDB
+  title: string;
+  description?: string; // Optional field
+  posts: Post[];
+  startDate: Date;
+  endDate: Date;
+  status: "pending" | "active" | "completed"; // Enum maps to a union type
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface User {
