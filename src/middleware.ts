@@ -47,9 +47,6 @@ export const config = {
     "/signin",
     "/signup",
     "/signout",
-    "/dashboard/:path*",
-    "/schedule/:path*",
-    "/verify",
     "/admin/:path*", // Add the admin route to the matcher
   ],
 };
