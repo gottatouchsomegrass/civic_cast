@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -73,6 +74,16 @@ export default function SignUpPage() {
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "Signing up..." : "Sign Up"}
         </Button>
+        <div className="text-center">
+          <p className="text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link href="/signin">
+              <Button variant="link" className="px-1 text-primary">
+                Sign In
+              </Button>
+            </Link>
+          </p>
+        </div>
       </form>
     </div>
   );

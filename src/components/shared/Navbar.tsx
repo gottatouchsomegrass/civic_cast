@@ -44,14 +44,14 @@ export default function Navbar() {
         </Link>
 
         <Link
-          href="/login"
+          href="/signin"
           // Add: relative, group, overflow-hidden
           // Remove: bg-red-600, transition-colors
           className="relative group nav-link overflow-hidden hover:scale-105 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300"
           id="login"
         >
           {/* The span ensures text is on a higher layer than the animation */}
-          <span className="relative z-10">Login / Register</span>
+          <span className="relative z-10">Sign In / Register</span>
         </Link>
       </nav>
     </header>
