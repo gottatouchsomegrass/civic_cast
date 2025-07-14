@@ -15,16 +15,13 @@ export default function HomePage() {
     <div className="min-h-screen bg-[#0a0a0a] text-white">
       <Navbar />
       <main>
-        {/* Hero Section */}
         <div className="relative container mx-auto px-6 text-center mt-12 pb-20">
-          {/* --- Replace static text with the animated component --- */}
           <AnimatedHeroText />
 
           <VoterIdCard />
           <ScrollIndicator />
         </div>
 
-        {/* Scrollytelling Section */}
         <VotingStory />
       </main>
 
