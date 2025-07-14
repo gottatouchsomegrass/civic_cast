@@ -56,6 +56,7 @@ function ParticleCanvas({ scrollProgress }: { scrollProgress: number }) {
     }));
 
     function animate() {
+      if (!canvas) return;
       if (!ctx) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const red = 229;
