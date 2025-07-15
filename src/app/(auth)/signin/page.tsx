@@ -16,7 +16,6 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false);
   const containerRef = useRef(null);
 
-  // --- GSAP Animation Sequence ---
   useGSAP(
     () => {
       const tl = gsap.timeline();
@@ -69,7 +68,7 @@ export default function SignInPage() {
       toast.error(res.error);
     } else {
       toast.success("Signed in successfully!");
-      // FIX: Always redirect to the /election page for normal users
+
       router.push("/election");
     }
   }
