@@ -217,10 +217,9 @@ export default function Footer() {
         <PhysicsSandbox />
         <nav className="mt-16 border-t border-gray-800/50 pt-12">
           <ul className="flex flex-col items-center justify-center gap-6 sm:flex-row">
-            {/* FIX: The "Vote Now" button is now always visible */}
             <li>
               <Link
-                href="/vote"
+                href="/election"
                 className="group relative inline-block rounded-lg bg-gray-800/50 px-8 py-3 text-lg font-bold text-white transition-all duration-300 hover:bg-gray-800/80"
               >
                 <span className="absolute top-0 left-0 h-full w-0 rounded-lg bg-red-600 transition-all duration-300 group-hover:w-full"></span>
@@ -228,7 +227,6 @@ export default function Footer() {
               </Link>
             </li>
 
-            {/* FIX: Only the authentication button is conditional */}
             <li>
               {isSignedIn ? (
                 <button
