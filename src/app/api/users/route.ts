@@ -2,8 +2,6 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb";
 import User from "@/model/User";
-import Vote from "@/model/Vote";
-import Election from "@/model/Election";
 
 export async function GET() {
   await connectToDatabase();

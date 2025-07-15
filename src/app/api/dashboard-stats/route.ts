@@ -36,13 +36,13 @@ export async function GET(request: Request) {
     const today = startOfDay(new Date());
     const weeklyVoteData = await Vote.aggregate([
       { $match: { electionId: { $in: electionIds }, createdAt: { $gte: subDays(new Date(), 7) } } },
-      {
-        $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-          count: { $sum: 1 },
+        {
+          $group: {
+            _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+            count: { $sum: 1 },
+          },
         },
-      },
-      { $sort: { _id: 1 } },
+        { $sort: { _id: 1 } },
     ]);
     const activityByDate: { [key: string]: number } = {};
     weeklyVoteData.forEach((day) => {
