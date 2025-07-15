@@ -254,7 +254,9 @@ export default function ManageCandidatesPage() {
   }, [adminId]);
 
   const handleCandidateAdded = (newCandidate: User) => {
-    setCandidates((prev) => [newCandidate, ...prev]);
+    // Attach the full election object for immediate display
+    const fullElection = elections.find(e => e._id === (newCandidate.election?._id || newCandidate.election));
+    setCandidates((prev) => [{ ...newCandidate, election: fullElection }, ...prev]);
   };
 
   const handleDeleteCandidate = async (id: string) => {
