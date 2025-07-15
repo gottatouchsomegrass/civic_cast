@@ -6,7 +6,6 @@ if (!MONGODB_URI) {
   throw new Error("Please define the MONGODB_URI in .env.local");
 }
 
-// Declare global mongoose cache type
 declare global {
   var mongooseCache: {
     conn: typeof mongoose | null;
@@ -14,7 +13,6 @@ declare global {
   };
 }
 
-// Initialize global cache if not already
 global.mongooseCache = global.mongooseCache || {
   conn: null,
   promise: null,

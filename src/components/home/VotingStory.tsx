@@ -130,7 +130,6 @@ export default function VotingStory() {
         title.innerHTML = splitTitle;
         const titleChars = title.querySelectorAll(".char");
 
-        // --- FIX: A more robust function to split words while preserving spaces ---
         const splitWordsAndKeepSpaces = (element: Element) => {
           const words: HTMLElement[] = [];
           const textContent = element.textContent || "";
@@ -144,7 +143,6 @@ export default function VotingStory() {
               element.appendChild(wordSpan);
               words.push(wordSpan);
             }
-            // Add a space back after the word as a text node
             const spaceNode = document.createTextNode(" ");
             element.appendChild(spaceNode);
           });

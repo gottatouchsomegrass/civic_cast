@@ -9,7 +9,6 @@ export default function BackToTopButton() {
   const [isVisible, setIsVisible] = useState(false);
   const buttonRef = React.useRef<HTMLButtonElement>(null);
 
-  // Show or hide the button based on scroll position
   const toggleVisibility = () => {
     if (window.scrollY > 500) {
       setIsVisible(true);
@@ -18,7 +17,6 @@ export default function BackToTopButton() {
     }
   };
 
-  // Smoothly scroll to the top of the page
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -28,7 +26,6 @@ export default function BackToTopButton() {
     return () => window.removeEventListener("scroll", toggleVisibility);
   }, []);
 
-  // Animate the button's appearance
   useGSAP(() => {
     gsap.to(buttonRef.current, {
       autoAlpha: isVisible ? 1 : 0,
@@ -43,7 +40,7 @@ export default function BackToTopButton() {
       ref={buttonRef}
       onClick={scrollToTop}
       className="fixed bottom-8 right-8 z-50 p-3 rounded-full bg-[#e50914] text-white shadow-lg hover:bg-[#f40612] transition-colors"
-      style={{ visibility: "hidden" }} // Initially hidden, GSAP controls visibility
+      style={{ visibility: "hidden" }}
       aria-label="Go to top"
     >
       <svg

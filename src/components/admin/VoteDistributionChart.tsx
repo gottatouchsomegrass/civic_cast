@@ -10,10 +10,7 @@ export default function VoteDistributionChart({
 }: {
   candidates: User[];
 }) {
-  // --- FIX: Add a guard clause to handle undefined or non-array props ---
-  // If candidates is not a valid array, default to an empty array.
   const validCandidates = Array.isArray(candidates) ? candidates : [];
-
   const totalVotes = validCandidates.reduce(
     (sum, c) => sum + (c.voteCount || 0),
     0
