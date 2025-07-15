@@ -1,4 +1,3 @@
-// app/admin/signin/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -26,16 +25,14 @@ export default function AdminSignInPage() {
 
     try {
       const result = await signIn("credentials", {
-        redirect: false, // We handle the redirect manually
+        redirect: false,
         email,
         password,
       });
 
       if (result?.ok) {
-        // On successful sign-in, redirect to the admin dashboard
         router.push("/admin");
       } else {
-        // Handle failed sign-in attempt
         setError(result?.error || "Invalid email or password.");
       }
     } catch (err) {
@@ -96,7 +93,6 @@ export default function AdminSignInPage() {
               />
             </div>
           </div>
-          {/* --- Form Fields End Here --- */}
 
           {error && (
             <p className="text-red-500 text-sm text-center pt-2">{error}</p>
@@ -114,13 +110,7 @@ export default function AdminSignInPage() {
         </form>
 
         <p className="text-center text-sm text-gray-400">
-          Need an admin account?{" "}
-          <Link
-            href="/admin/signup"
-            className="font-medium text-red-500 hover:underline"
-          >
-            Register Here
-          </Link>
+          Need an admin account? contact Pyro and Dipankar for it.
         </p>
       </div>
     </div>

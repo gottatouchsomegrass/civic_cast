@@ -69,8 +69,12 @@ export default function ElectionSettingsPage() {
 
       toast.success("Election deleted successfully.");
       await fetchElections();
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Could not delete election.");
+      }
     } finally {
       setIsModalOpen(false);
       setElectionToDelete(null);

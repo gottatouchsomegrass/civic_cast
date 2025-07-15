@@ -7,7 +7,6 @@ import { UserPlus, Upload } from "lucide-react";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useSession } from "next-auth/react";
 
-// The form is now updated to handle file uploads
 function RegisterCandidateForm({
   elections,
   onCandidateAdded,
@@ -43,7 +42,6 @@ function RegisterCandidateForm({
     setError("");
 
     try {
-      // Step 1: Upload the image to Cloudinary
       const formData = new FormData();
       formData.append("file", profilePictureFile);
 
@@ -58,7 +56,6 @@ function RegisterCandidateForm({
       }
       const profilePictureUrl = uploadData.url;
 
-      // Step 2: Register the candidate with the image URL
       const candidateResponse = await fetch("/api/register-candidate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -68,7 +65,7 @@ function RegisterCandidateForm({
           password,
           electionId: selectedElectionId,
           electionPost,
-          profilePicture: profilePictureUrl, // Use the URL from Cloudinary
+          profilePicture: profilePictureUrl,
         }),
       });
 
@@ -76,7 +73,7 @@ function RegisterCandidateForm({
       if (candidateResponse.ok) {
         setMessage(`Candidate ${name} registered successfully!`);
         onCandidateAdded(candidateData);
-        // Reset form
+
         setName("");
         setEmail("");
         setPassword("");
@@ -205,7 +202,6 @@ function RegisterCandidateForm({
   );
 }
 
-// The main page component (logic remains the same)
 export default function ManageCandidatesPage() {
   const { data: session } = useSession();
   const adminId = session?.user?._id;
@@ -228,9 +224,13 @@ export default function ManageCandidatesPage() {
         const usersData = await usersRes.json();
         const electionsData = await electionsRes.json();
 
-        // Only show candidates for the current admin's elections
-        const adminElectionIds = new Set(electionsData.map((e: Election) => e._id));
-        const filteredCandidates = usersData.candidates.filter((c: User) => c.election && adminElectionIds.has(c.election._id || c.election));
+        const adminElectionIds = new Set(
+          electionsData.map((e: Election) => e._id)
+        );
+        const filteredCandidates = usersData.candidates.filter(
+          (c: User) =>
+            c.election && adminElectionIds.has(c.election._id || c.election)
+        );
 
         setCandidates(filteredCandidates);
         setElections(electionsData);
@@ -254,9 +254,13 @@ export default function ManageCandidatesPage() {
   }, [adminId]);
 
   const handleCandidateAdded = (newCandidate: User) => {
-    // Attach the full election object for immediate display
-    const fullElection = elections.find(e => e._id === (newCandidate.election?._id || newCandidate.election));
-    setCandidates((prev) => [{ ...newCandidate, election: fullElection }, ...prev]);
+    const fullElection = elections.find(
+      (e) => e._id === (newCandidate.election?._id || newCandidate.election)
+    );
+    setCandidates((prev) => [
+      { ...newCandidate, election: fullElection },
+      ...prev,
+    ]);
   };
 
   const handleDeleteCandidate = async (id: string) => {

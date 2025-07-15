@@ -1,4 +1,3 @@
-// app/api/register-candidate/route.ts
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import User from "@/model/User";
@@ -9,7 +8,6 @@ export async function POST(request: Request) {
     const { name, email, password, electionId, electionPost, profilePicture } =
       await request.json();
 
-    // Enforce all fields, including the new ones
     if (
       !name ||
       !email ||

@@ -73,8 +73,12 @@ export default function CreateElectionForm({
       setStartDate("");
       setEndDate("");
       setPosts([{ title: "" }]);
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
     } finally {
       setLoading(false);
     }

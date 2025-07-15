@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/authOptions";
 import Election from "@/model/Election";
 import dbConnect from "@/lib/mongodb";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
@@ -42,7 +42,14 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     const { title, description, startDate, endDate, posts } = body;
-    if (!title || !startDate || !endDate || !posts || posts.length === 0) {
+    if (
+      !title ||
+      !startDate ||
+      !endDate ||
+      !description ||
+      !posts ||
+      posts.length === 0
+    ) {
       return NextResponse.json(
         { message: "Missing required fields for election." },
         { status: 400 }
