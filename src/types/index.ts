@@ -24,10 +24,10 @@ export interface User {
   role?: "admin" | "voter" | "candidate";
   isVerified?: boolean;
   profilePicture?: string;
-  electionPost?: string; // If the user is a candidate for a specific post
+  electionPost?: string;
   voteCount?: number;
-  votes: Vote[]; // The user's voting history
+  votes: Vote[];
   election?: Election;
   createdAt?: Date;
-  updatedAt?: Date; // If the user is a candidate in a specific election
+  updatedAt?: Date;
 }
