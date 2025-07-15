@@ -228,7 +228,11 @@ export default function ManageCandidatesPage() {
         const usersData = await usersRes.json();
         const electionsData = await electionsRes.json();
 
-        setCandidates(usersData.candidates);
+        // Only show candidates for the current admin's elections
+        const adminElectionIds = new Set(electionsData.map((e: Election) => e._id));
+        const filteredCandidates = usersData.candidates.filter((c: User) => c.election && adminElectionIds.has(c.election._id || c.election));
+
+        setCandidates(filteredCandidates);
         setElections(electionsData);
       } catch (err) {
         console.error("An operation failed:", err);

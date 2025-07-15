@@ -5,6 +5,7 @@ import type { User } from "@/types";
 import UserTable from "@/components/admin/UserTable";
 import { UserPlus } from "lucide-react";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { useSession } from "next-auth/react";
 
 // A dedicated form for registering a new voter
 function RegisterVoterForm({
@@ -108,15 +109,18 @@ function RegisterVoterForm({
 
 // The main page component for managing voters
 export default function ManageVotersPage() {
+  const { data: session } = useSession();
+  const adminId = session?.user?._id;
   const [voters, setVoters] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Fetch initial list of voters
   useEffect(() => {
+    if (!adminId) return;
     const fetchVoters = async () => {
       try {
-        const res = await fetch("/api/users");
+        const res = await fetch(`/api/users/by-admin?adminId=${adminId}`);
         if (!res.ok) throw new Error("Could not fetch voter data.");
         const data = await res.json();
         setVoters(data.voters);
@@ -137,7 +141,7 @@ export default function ManageVotersPage() {
       }
     };
     fetchVoters();
-  }, []);
+  }, [adminId]);
 
   // Callback to add a new voter to the list without a full page reload
   const handleVoterAdded = (newVoter: User) => {
@@ -175,7 +179,7 @@ export default function ManageVotersPage() {
       <div>
         <h2 className="text-3xl font-bold text-white">Manage Voters</h2>
         <p className="text-gray-400 mt-1">
-          View, add, or remove registered voters.
+          View registered voters who have participated in your elections.
         </p>
       </div>
 
@@ -186,15 +190,6 @@ export default function ManageVotersPage() {
             Registered Voters List
           </h3>
           <UserTable users={voters} onDelete={handleDeleteVoter} />
-        </div>
-
-        {/* Sidebar-like area for the registration form */}
-        <div className="bg-[#181818] p-6 rounded-lg border border-gray-800">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <UserPlus className="h-5 w-5" />
-            Register New Voter
-          </h3>
-          <RegisterVoterForm onVoterAdded={handleVoterAdded} />
         </div>
       </div>
     </div>
