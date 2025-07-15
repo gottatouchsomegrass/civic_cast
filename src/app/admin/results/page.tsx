@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import type { User, Election } from "@/types";
 import { BarChart3 } from "lucide-react";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { useSession } from "next-auth/react";
 
 // A component to display the results for a single candidate
 function CandidateResult({
@@ -44,18 +45,20 @@ function CandidateResult({
 
 // The main page component for displaying election results
 export default function ResultsPage() {
+  const { data: session } = useSession();
+  const adminId = session?.user?._id;
   const [elections, setElections] = useState<Election[]>([]);
   const [candidates, setCandidates] = useState<User[]>([]);
   const [selectedElectionId, setSelectedElectionId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch all necessary data when the component mounts
   useEffect(() => {
+    if (!adminId) return;
     const fetchResultsData = async () => {
       try {
         const [electionsRes, usersRes] = await Promise.all([
-          fetch("/api/elections"),
+          fetch(`/api/elections?adminId=${adminId}`),
           fetch("/api/users"),
         ]);
 
@@ -91,7 +94,7 @@ export default function ResultsPage() {
     };
 
     fetchResultsData();
-  }, []);
+  }, [adminId]);
 
   // Memoize the selected election and its results to avoid re-calculation on every render
   const selectedElectionResults = useMemo(() => {

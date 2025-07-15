@@ -6,31 +6,36 @@ import Vote from "@/model/Vote";
 import Election from "@/model/Election";
 import { startOfDay, subDays } from "date-fns";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await connectToDatabase();
-
-    // Use Promise.all to fetch data concurrently for better performance
-    const [
-      totalCandidates,
-      totalVoters,
-      totalElections,
-      totalVotes,
-      allCandidates,
-      allElections,
-      recentUsers,
-      weeklyVoteData,
-    ] = await Promise.all([
-      User.countDocuments({ role: "candidate" }),
-      User.countDocuments({ role: "voter" }),
-      Election.countDocuments(),
-      Vote.countDocuments(),
-      User.find({ role: "candidate" }).populate("election", "title"),
-      Election.find({}).sort({ createdAt: -1 }),
-      User.find().sort({ createdAt: -1 }).limit(5), // For the activity feed
-      Vote.aggregate([
-        // For the weekly activity chart
-        { $match: { createdAt: { $gte: subDays(new Date(), 7) } } },
+    const url = new URL(request.url);
+    const adminId = url.searchParams.get("adminId");
+    const electionFilter = adminId ? { createdBy: adminId } : {};
+    // 1. Find all elections created by this admin
+    const allElections = await Election.find(electionFilter).sort({ createdAt: -1 });
+    const electionIds = allElections.map((e) => e._id);
+    // 2. Candidates for these elections
+    const allCandidates = await User.find({ role: "candidate", election: { $in: electionIds } }).populate("election", "title");
+    // 3. Voters who have voted in these elections
+    const votes = await Vote.find({ electionId: { $in: electionIds } });
+    const voterIds = [...new Set(votes.map((v) => v.voterId.toString()))];
+    const totalVoters = voterIds.length;
+    // 4. Total votes cast in these elections
+    const totalVotes = votes.length;
+    // 5. Recent users (candidates or voters) for these elections
+    const recentUsers = await User.find({
+      $or: [
+        { role: "candidate", election: { $in: electionIds } },
+        { _id: { $in: voterIds } },
+      ],
+    })
+      .sort({ createdAt: -1 })
+      .limit(5);
+    // 6. Weekly activity for these elections
+    const today = startOfDay(new Date());
+    const weeklyVoteData = await Vote.aggregate([
+      { $match: { electionId: { $in: electionIds }, createdAt: { $gte: subDays(new Date(), 7) } } },
         {
           $group: {
             _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
@@ -38,11 +43,7 @@ export async function GET() {
           },
         },
         { $sort: { _id: 1 } },
-      ]),
     ]);
-
-    // Format the weekly activity data
-    const today = startOfDay(new Date());
     const activityByDate: { [key: string]: number } = {};
     weeklyVoteData.forEach((day) => {
       activityByDate[day._id] = day.count;
@@ -56,12 +57,11 @@ export async function GET() {
         day: date.toLocaleDateString("en-US", { weekday: "short" }),
       };
     });
-
     // Return the complete payload for the dashboard
     return NextResponse.json({
-      totalCandidates,
+      totalCandidates: allCandidates.length,
       totalVoters,
-      totalElections,
+      totalElections: allElections.length,
       totalVotes,
       allCandidates,
       allElections,
@@ -71,7 +71,6 @@ export async function GET() {
   } catch (error) {
     let errorMessage =
       "An unexpected error occurred while fetching dashboard stats.";
-
     if (error instanceof Error) {
       errorMessage = `Error fetching dashboard stats: ${error.message}`;
       console.error(errorMessage);

@@ -5,6 +5,7 @@ import type { User, Election } from "@/types";
 import UserTable from "@/components/admin/UserTable";
 import { UserPlus, Upload } from "lucide-react";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { useSession } from "next-auth/react";
 
 // The form is now updated to handle file uploads
 function RegisterCandidateForm({
@@ -206,17 +207,20 @@ function RegisterCandidateForm({
 
 // The main page component (logic remains the same)
 export default function ManageCandidatesPage() {
+  const { data: session } = useSession();
+  const adminId = session?.user?._id;
   const [candidates, setCandidates] = useState<User[]>([]);
   const [elections, setElections] = useState<Election[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!adminId) return;
     const fetchData = async () => {
       try {
         const [usersRes, electionsRes] = await Promise.all([
           fetch("/api/users"),
-          fetch("/api/elections"),
+          fetch(`/api/elections?adminId=${adminId}`),
         ]);
         if (!usersRes.ok || !electionsRes.ok)
           throw new Error("Could not fetch required data.");
@@ -224,7 +228,11 @@ export default function ManageCandidatesPage() {
         const usersData = await usersRes.json();
         const electionsData = await electionsRes.json();
 
-        setCandidates(usersData.candidates);
+        // Only show candidates for the current admin's elections
+        const adminElectionIds = new Set(electionsData.map((e: Election) => e._id));
+        const filteredCandidates = usersData.candidates.filter((c: User) => c.election && adminElectionIds.has(c.election._id || c.election));
+
+        setCandidates(filteredCandidates);
         setElections(electionsData);
       } catch (err) {
         console.error("An operation failed:", err);
@@ -243,7 +251,7 @@ export default function ManageCandidatesPage() {
       }
     };
     fetchData();
-  }, []);
+  }, [adminId]);
 
   const handleCandidateAdded = (newCandidate: User) => {
     setCandidates((prev) => [newCandidate, ...prev]);

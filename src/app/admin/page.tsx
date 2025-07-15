@@ -5,6 +5,7 @@ import type { User, Election } from "@/types";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 // Import all necessary components for the overview page
 import StatCard from "@/components/admin/StatCard";
@@ -38,6 +39,9 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const { data: session } = useSession();
+  const adminId = session?.user?._id;
+
   const dashboardRef = useRef<HTMLDivElement>(null);
 
   // --- Animations ---
@@ -59,7 +63,8 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const res = await fetch("/api/dashboard-stats");
+        if (!adminId) return;
+        const res = await fetch(`/api/dashboard-stats?adminId=${adminId}`);
         if (!res.ok)
           throw new Error("Failed to load dashboard data. Please try again.");
 
@@ -84,7 +89,7 @@ export default function AdminDashboardPage() {
       }
     };
     fetchDashboardData();
-  }, []);
+  }, [adminId]);
 
   // --- Memoized Calculations for Performance ---
   const chartCandidates = useMemo(() => {

@@ -10,7 +10,7 @@ export default function UserTable({
   isCandidateTable = false,
 }: {
   users: User[];
-  onDelete: (id: string) => void;
+  onDelete?: (id: string) => void;
   isCandidateTable?: boolean;
 }) {
   return (
@@ -29,7 +29,7 @@ export default function UserTable({
               <th className="p-3 font-semibold">Election</th>
             )}
             <th className="p-3 font-semibold">Registered On</th>
-            <th className="p-3 font-semibold">Actions</th>
+            {isCandidateTable && <th className="p-3 font-semibold">Actions</th>}
           </tr>
         </thead>
         <tbody>
@@ -61,14 +61,16 @@ export default function UserTable({
               <td className="p-3">
                 {new Date(user.createdAt!).toLocaleDateString()}
               </td>
-              <td className="p-3">
-                <button
-                  onClick={() => onDelete(user._id)}
-                  className="bg-red-600 text-white px-3 py-1 rounded-md text-xs font-semibold hover:bg-red-700 transition-colors"
-                >
-                  Remove
-                </button>
-              </td>
+              {isCandidateTable && (
+                <td className="p-3">
+                  <button
+                    onClick={() => onDelete && onDelete(user._id)}
+                    className="bg-red-600 text-white px-3 py-1 rounded-md text-xs font-semibold hover:bg-red-700 transition-colors"
+                  >
+                    Remove
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

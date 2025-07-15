@@ -14,6 +14,9 @@ export default function WeeklyActivityChart({
 }) {
   const maxValue = Math.max(...activity.map((a) => a.count), 1);
 
+  // Debug log
+  console.log("WeeklyActivityChart activity:", activity, "maxValue:", maxValue);
+
   return (
     <div className="bg-[#181818] p-6 rounded-lg border border-gray-800 h-full">
       <h3 className="text-lg font-semibold text-white mb-4">

@@ -32,6 +32,11 @@ const ElectionSchema = new Schema(
       enum: ["pending", "active", "completed"],
       default: "pending",
     },
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
   },
   { timestamps: true }
 );

@@ -2,8 +2,11 @@
 "use client";
 
 import React, { useState } from "react";
+import { useSession } from "next-auth/react";
 
 export default function CreateElectionForm() {
+  const { data: session } = useSession();
+  const adminId = session?.user?._id;
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -33,10 +36,16 @@ export default function CreateElectionForm() {
     setLoading(true);
     setMessage("");
 
+    if (!adminId) {
+      setMessage("You must be signed in as an admin to create an election.");
+      setLoading(false);
+      return;
+    }
+
     const response = await fetch("/api/elections", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, description, startDate, endDate, posts }),
+      body: JSON.stringify({ title, description, startDate, endDate, posts, adminId }),
     });
 
     setLoading(false);
