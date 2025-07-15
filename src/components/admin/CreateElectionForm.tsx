@@ -1,19 +1,24 @@
-// app/components/admin/CreateElectionForm.tsx
 "use client";
 
 import React, { useState } from "react";
 import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 
-export default function CreateElectionForm() {
+interface CreateElectionFormProps {
+  onSuccess: () => void;
+}
+
+export default function CreateElectionForm({
+  onSuccess,
+}: CreateElectionFormProps) {
   const { data: session } = useSession();
   const adminId = session?.user?._id;
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  // FIX: The state now only tracks the title of each post
   const [posts, setPosts] = useState<{ title: string }[]>([{ title: "" }]);
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleAddPost = () => {
@@ -34,37 +39,50 @@ export default function CreateElectionForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setMessage("");
 
     if (!adminId) {
-      setMessage("You must be signed in as an admin to create an election.");
+      toast.error("You must be signed in to create an election.");
       setLoading(false);
       return;
     }
 
-    const response = await fetch("/api/elections", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, description, startDate, endDate, posts, adminId }),
-    });
+    try {
+      const response = await fetch("/api/elections", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          description,
+          startDate,
+          endDate,
+          posts,
+          adminId,
+        }),
+      });
 
-    setLoading(false);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create election.");
+      }
 
-    if (response.ok) {
-      setMessage("Election created successfully!");
-      // Reset form
+      toast.success("Election created successfully!");
+      onSuccess();
+
       setTitle("");
       setDescription("");
       setStartDate("");
       setEndDate("");
       setPosts([{ title: "" }]);
-    } else {
-      setMessage("Failed to create election.");
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* All your input fields remain exactly the same */}
       <input
         type="text"
         placeholder="Election Title (e.g., Student Union 2025)"
@@ -138,20 +156,12 @@ export default function CreateElectionForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full text-lg font-bold py-3 bg-red-600 hover:bg-red-700 rounded-md transition-colors disabled:bg-red-800"
+        className="w-full text-lg font-bold py-3 bg-red-600 hover:bg-red-700 rounded-md transition-colors disabled:bg-red-800 disabled:cursor-not-allowed"
       >
         {loading ? "Creating..." : "Create Election"}
       </button>
 
-      {message && (
-        <p
-          className={`text-center ${
-            message.includes("success") ? "text-green-500" : "text-red-500"
-          }`}
-        >
-          {message}
-        </p>
-      )}
+      {/* 6. The local message display element is now removed */}
     </form>
   );
 }
