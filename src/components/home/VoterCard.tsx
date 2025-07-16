@@ -14,7 +14,6 @@ import { Group } from "three";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 
-// FIX: CardMesh now accepts a 'scale' prop to control its size.
 function CardMesh({ scale }: { scale: number }) {
   const groupRef = useRef<Group>(null);
 
@@ -49,7 +48,6 @@ function CardMesh({ scale }: { scale: number }) {
 
   const Z_OFFSET = 0.051;
 
-  // FIX: The entire group is now scaled based on the passed prop.
   return (
     <group ref={groupRef} scale={scale}>
       <RoundedBox args={[4, 2.5, 0.1]} radius={0.05} smoothness={4}>
@@ -184,7 +182,6 @@ function CardMesh({ scale }: { scale: number }) {
 
 export default function VoterIdCard() {
   const containerRef = useRef<HTMLDivElement>(null);
-  // FIX: Add state to track screen size for responsiveness.
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -196,7 +193,6 @@ export default function VoterIdCard() {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  // FIX: Calculate scale and camera FOV based on screen size.
   const cardScale = isMobile ? 0.75 : 1;
   const cameraFov = isMobile ? 65 : 50;
 

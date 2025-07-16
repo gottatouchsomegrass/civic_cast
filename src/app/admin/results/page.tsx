@@ -58,7 +58,7 @@ export default function ResultsPage() {
     const fetchResultsData = async () => {
       try {
         const [electionsRes, usersRes] = await Promise.all([
-          fetch(`/api/elections?adminId=${adminId}`),
+          fetch(`/api/admin/elections?adminId=${adminId}`),
           fetch("/api/users"),
         ]);
 

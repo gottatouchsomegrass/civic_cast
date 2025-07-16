@@ -20,7 +20,7 @@ export default function ElectionSettingsPage() {
 
   const fetchElections = useCallback(async () => {
     try {
-      const res = await fetch(`/api/elections`);
+      const res = await fetch(`/api/admin/elections`);
 
       if (!res.ok) {
         const errorData = await res.json();

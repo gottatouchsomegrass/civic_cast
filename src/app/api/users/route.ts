@@ -11,10 +11,8 @@ export async function GET() {
     const candidates = await User.find({ role: "candidate" }).populate(
       "election"
     );
-    console.log("Candidates fetched:", candidates);
 
     const voters = await User.find({ role: "voter" }).select("-password");
-    console.log("Voters fetched:", voters);
 
     return NextResponse.json({ voters, candidates });
   } catch (error) {

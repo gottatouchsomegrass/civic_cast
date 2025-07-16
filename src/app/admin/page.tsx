@@ -7,19 +7,15 @@ import gsap from "gsap";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 
-// Import all necessary components for the overview page
 import StatCard from "@/components/admin/StatCard";
 import WeeklyActivityChart from "@/components/admin/WeeklyActivityChart";
 import VoteDistributionChart from "@/components/admin/VoteDistributionChart";
 import RecentActivityFeed from "@/components/admin/RecentActivityFeed";
 import CustomSelect from "@/components/admin/CustomSelect";
 
-// Import icons for use in the dashboard
 import { Users, UserPlus, CheckSquare, Vote, ArrowRight } from "lucide-react";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
-// FIX: Define a specific interface for the dashboard statistics object.
-// This eliminates the 'any' type and provides full type safety.
 interface DashboardStats {
   totalCandidates: string;
   totalVoters: string;
@@ -32,8 +28,6 @@ interface DashboardStats {
 }
 
 export default function AdminDashboardPage() {
-  // --- State Management ---
-  // FIX: Use the specific DashboardStats interface instead of 'any'.
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [chartElectionId, setChartElectionId] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -44,10 +38,9 @@ export default function AdminDashboardPage() {
 
   const dashboardRef = useRef<HTMLDivElement>(null);
 
-  // --- Animations ---
   useGSAP(
     () => {
-      if (loading) return; // Prevent animation from running on initial load
+      if (loading) return;
       gsap.from(".dashboard-item", {
         autoAlpha: 0,
         y: 30,
@@ -59,7 +52,6 @@ export default function AdminDashboardPage() {
     { scope: dashboardRef, dependencies: [loading] }
   );
 
-  // --- Data Fetching ---
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -68,7 +60,6 @@ export default function AdminDashboardPage() {
         if (!res.ok)
           throw new Error("Failed to load dashboard data. Please try again.");
 
-        // The 'data' variable will be checked against the DashboardStats type.
         const data: DashboardStats = await res.json();
         setStats(data);
 
@@ -91,7 +82,6 @@ export default function AdminDashboardPage() {
     fetchDashboardData();
   }, [adminId]);
 
-  // --- Memoized Calculations for Performance ---
   const chartCandidates = useMemo(() => {
     if (!chartElectionId || !stats?.allCandidates) return [];
     return stats.allCandidates.filter(
@@ -107,7 +97,6 @@ export default function AdminDashboardPage() {
     }));
   }, [stats?.allElections]);
 
-  // --- Conditional Rendering ---
   if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
@@ -123,7 +112,6 @@ export default function AdminDashboardPage() {
     );
   }
 
-  // By this point, 'stats' must be a valid DashboardStats object.
   if (!stats) {
     return (
       <div className="flex h-full w-full items-center justify-center">
@@ -132,7 +120,6 @@ export default function AdminDashboardPage() {
     );
   }
 
-  // --- Main Component Render ---
   return (
     <div ref={dashboardRef} className="space-y-8">
       {/* Header */}

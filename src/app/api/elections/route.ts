@@ -7,19 +7,10 @@ import dbConnect from "@/lib/mongodb";
 export async function GET() {
   try {
     await dbConnect();
-    const session = await getServerSession(authOptions);
 
-    if (session?.user?.role === "admin") {
-      const elections = await Election.find({
-        createdBy: session.user._id,
-      }).sort({
-        createdAt: -1,
-      });
-      return NextResponse.json(elections);
-    } else {
-      const elections = await Election.find({}).sort({ createdAt: -1 });
-      return NextResponse.json(elections);
-    }
+    const elections = await Election.find({}).sort({ createdAt: -1 });
+
+    return NextResponse.json(elections);
   } catch (error) {
     console.error("GET /api/elections failed:", error);
     return NextResponse.json(

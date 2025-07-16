@@ -1,11 +1,14 @@
-// app/components/home/AnimatedHeroText.tsx
 "use client";
 
 import React, { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
+import { SplitText } from "gsap/SplitText";
 
-export default function AnimatedHeroText() {
+gsap.registerPlugin(SplitText);
+
+// Wrap with React.memo to prevent unnecessary re-renders if the parent component updates.
+const AnimatedHeroText = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
@@ -15,60 +18,40 @@ export default function AnimatedHeroText() {
 
       if (!title || !subtitle) return;
 
-      // This function correctly splits the title while preserving its HTML structure
-      const splitTextAndKeepStructure = (element: Element): HTMLElement[] => {
-        const chars: HTMLElement[] = [];
-        const nodes = Array.from(element.childNodes);
+      // OPTIMIZATION 1: Animate words instead of characters. Much less work for the browser.
+      const split = new SplitText(title, { type: "words" });
 
-        nodes.forEach((node) => {
-          if (node.nodeType === Node.TEXT_NODE) {
-            const text = node.textContent || "";
-            const fragment = document.createDocumentFragment();
-            text.split("").forEach((char) => {
-              const span = document.createElement("span");
-              span.textContent = char;
-              if (char.trim() !== "") {
-                span.style.display = "inline-block";
-              }
-              fragment.appendChild(span);
-              chars.push(span);
-            });
-            node.parentNode?.replaceChild(fragment, node);
-          } else if (node.nodeType === Node.ELEMENT_NODE) {
-            if ((node as Element).childNodes.length > 0) {
-              chars.push(...splitTextAndKeepStructure(node as Element));
-            }
-          }
-        });
-        return chars;
-      };
-
-      const titleChars = splitTextAndKeepStructure(title);
-
-      // --- FIX: Create a GSAP timeline for sequential animation ---
       const tl = gsap.timeline();
 
-      // 1. Animate the title with the character-by-character effect
-      tl.from(titleChars, {
+      tl.from(split.words, {
         y: 80,
         opacity: 0,
-        stagger: 0.02,
+        stagger: 0.05,
         duration: 0.8,
         ease: "power3.out",
+        // OPTIMIZATION 2: Force the animation onto the GPU layer.
+        force3D: true,
       });
 
-      // 2. Animate the subtitle as a single block for a slow, simple appearance
-      // This automatically fixes the "lost spaces" issue because we are not splitting its text.
       tl.from(
         subtitle,
         {
-          y: 20, // A subtle upward slide
-          opacity: 0, // Fade in from invisible
-          duration: 1.2, // A longer duration for a "slow" feel
+          y: 20,
+          opacity: 0,
+          duration: 1.2,
           ease: "power2.out",
+          // OPTIMIZATION 2: Also force the subtitle animation to the GPU.
+          force3D: true,
         },
-        "-=0.4"
-      ); // Overlap slightly with the end of the title animation for a fluid transition
+        "-=0.6" // Adjusted timing slightly for better flow with words
+      );
+
+      return () => {
+        // Cleanup is still essential
+        if (split.revert) {
+          split.revert();
+        }
+      };
     },
     { scope: containerRef }
   );
@@ -80,11 +63,12 @@ export default function AnimatedHeroText() {
         <br />
         Decide the Future.
       </h1>
-      {/* The subtitle's HTML is now left untouched, preserving all spaces */}
       <p className="hero-subtitle text-xl text-gray-300 mt-6 max-w-2xl mx-auto">
         Civic Cast provides a secure and transparent platform for digital
         elections. Register as a candidate or cast your vote with confidence.
       </p>
     </div>
   );
-}
+};
+
+export default React.memo(AnimatedHeroText);
