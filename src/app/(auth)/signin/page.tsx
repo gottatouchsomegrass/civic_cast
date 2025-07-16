@@ -68,6 +68,7 @@ export default function SignInPage() {
       toast.error(res.error);
     } else {
       toast.success("Signed in successfully!");
+      router.refresh();
 
       router.push("/election");
     }

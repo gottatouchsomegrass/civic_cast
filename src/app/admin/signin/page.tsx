@@ -30,6 +30,8 @@ export default function AdminSignInPage() {
       });
 
       if (result?.ok) {
+        router.refresh();
+
         router.push("/admin");
       } else {
         setError(result?.error || "Invalid email or password.");
