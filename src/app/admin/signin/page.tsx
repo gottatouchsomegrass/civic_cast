@@ -24,15 +24,12 @@ export default function AdminSignInPage() {
 
     try {
       const result = await signIn("credentials", {
-        redirect: false,
+        callbackUrl: "/admin",
         email,
         password,
       });
 
       if (result?.ok) {
-        router.refresh();
-
-        router.push("/admin");
       } else {
         setError(result?.error || "Invalid email or password.");
       }

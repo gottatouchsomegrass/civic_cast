@@ -57,7 +57,7 @@ export default function SignInPage() {
     setLoading(true);
 
     const res = await signIn("credentials", {
-      redirect: false,
+      callbackUrl: "/election",
       email: form.email,
       password: form.password,
     });
@@ -68,9 +68,6 @@ export default function SignInPage() {
       toast.error(res.error);
     } else {
       toast.success("Signed in successfully!");
-      router.refresh();
-
-      router.push("/election");
     }
   }
 
