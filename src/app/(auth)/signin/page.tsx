@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+
 import Link from "next/link";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";

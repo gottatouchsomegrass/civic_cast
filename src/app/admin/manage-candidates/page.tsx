@@ -6,6 +6,7 @@ import UserTable from "@/components/admin/UserTable";
 import { UserPlus, Upload } from "lucide-react";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useSession } from "next-auth/react";
+import ConfirmationModal from "@/components/shared/ConfirmationModal";
 
 function RegisterCandidateForm({
   elections,
@@ -89,12 +90,8 @@ function RegisterCandidateForm({
       console.error("An operation failed:", err);
 
       let errorMessage = "An unexpected error occurred.";
-
-      if (err instanceof Error) {
-        errorMessage = err.message;
-      } else if (typeof err === "string") {
-        errorMessage = err;
-      }
+      if (err instanceof Error) errorMessage = err.message;
+      else if (typeof err === "string") errorMessage = err;
 
       setError(errorMessage);
     } finally {
@@ -129,7 +126,6 @@ function RegisterCandidateForm({
         className="input-style"
       />
 
-      {/* File Input for Profile Picture */}
       <label
         htmlFor="file-upload"
         className="input-style flex items-center justify-center gap-2 cursor-pointer"
@@ -205,13 +201,20 @@ function RegisterCandidateForm({
 export default function ManageCandidatesPage() {
   const { data: session } = useSession();
   const adminId = session?.user?._id;
+
   const [candidates, setCandidates] = useState<User[]>([]);
   const [elections, setElections] = useState<Election[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [candidateToDelete, setCandidateToDelete] = useState<string | null>(
+    null
+  );
+
   useEffect(() => {
     if (!adminId) return;
+
     const fetchData = async () => {
       try {
         const [usersRes, electionsRes] = await Promise.all([
@@ -227,9 +230,8 @@ export default function ManageCandidatesPage() {
         const adminElectionIds = new Set(
           electionsData.map((e: Election) => e._id)
         );
-        const filteredCandidates = usersData.candidates.filter(
-          (c: User) =>
-            c.election && adminElectionIds.has(c.election._id || c.election)
+        const filteredCandidates = usersData.candidates.filter((c: User) =>
+          adminElectionIds.has(c.election?._id || c.election)
         );
 
         setCandidates(filteredCandidates);
@@ -238,18 +240,15 @@ export default function ManageCandidatesPage() {
         console.error("An operation failed:", err);
 
         let errorMessage = "An unexpected error occurred.";
-
-        if (err instanceof Error) {
-          errorMessage = err.message;
-        } else if (typeof err === "string") {
-          errorMessage = err;
-        }
+        if (err instanceof Error) errorMessage = err.message;
+        else if (typeof err === "string") errorMessage = err;
 
         setError(errorMessage);
       } finally {
         setLoading(false);
       }
     };
+
     fetchData();
   }, [adminId]);
 
@@ -263,10 +262,26 @@ export default function ManageCandidatesPage() {
     ]);
   };
 
-  const handleDeleteCandidate = async (id: string) => {
-    if (confirm("Are you sure you want to remove this candidate?")) {
-      await fetch(`/api/users/${id}`, { method: "DELETE" });
-      setCandidates((prev) => prev.filter((c) => c._id !== id));
+  // Opens modal and stores which candidate to delete
+  const handleDeleteCandidate = (id: string) => {
+    setCandidateToDelete(id);
+    setIsModalOpen(true);
+  };
+
+  // Called when user CONFIRMS deletion in modal
+  const handleConfirmDelete = async () => {
+    if (!candidateToDelete) return;
+
+    try {
+      await fetch(`/api/users/${candidateToDelete}`, {
+        method: "DELETE",
+      });
+      setCandidates((prev) => prev.filter((c) => c._id !== candidateToDelete));
+    } catch (err) {
+      console.error("Failed to delete candidate:", err);
+    } finally {
+      setIsModalOpen(false);
+      setCandidateToDelete(null);
     }
   };
 
@@ -277,12 +292,14 @@ export default function ManageCandidatesPage() {
       </div>
     );
   }
-  if (error)
+
+  if (error) {
     return (
       <div className="flex justify-center items-center h-full">
         <p className="text-red-500">{error}</p>
       </div>
     );
+  }
 
   return (
     <div className="space-y-8">
@@ -316,6 +333,17 @@ export default function ManageCandidatesPage() {
           />
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setCandidateToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Candidate"
+        message="Are you sure you want to permanently delete this candidate? This action cannot be undone."
+      />
     </div>
   );
 }
