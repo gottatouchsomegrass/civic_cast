@@ -51,7 +51,7 @@ export default function ManageVotersPage() {
           alert(`Failed to delete user: ${errorData.message}`);
         }
       } catch (err) {
-        alert("An error occurred while trying to delete the user.");
+        alert(`An error occurred while trying to delete the user.: ${err}`);
       }
     }
   };
