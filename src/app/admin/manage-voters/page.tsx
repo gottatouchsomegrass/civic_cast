@@ -3,93 +3,8 @@
 import React, { useState, useEffect } from "react";
 import type { User } from "@/types";
 import UserTable from "@/components/admin/UserTable";
-import { UserPlus, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-
-function RegisterVoterForm({
-  onVoterAdded,
-}: {
-  onVoterAdded: (newUser: User) => void;
-}) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("");
-    setError("");
-    try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setMessage(`Voter ${name} registered successfully!`);
-        onVoterAdded(data.user);
-        setName("");
-        setEmail("");
-        setPassword("");
-      } else {
-        setError(data.message || "Failed to register voter.");
-      }
-    } catch (err) {
-      let errorMessage = "An unexpected error occurred.";
-      if (err instanceof Error) errorMessage = err.message;
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <input
-        type="text"
-        placeholder="Full Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        required
-        className="input-style"
-      />
-      <input
-        type="email"
-        placeholder="Email Address"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-        className="input-style"
-      />
-      <input
-        type="password"
-        placeholder="Set a Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-        className="input-style"
-      />
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors disabled:bg-red-800"
-      >
-        {loading ? "Registering..." : "Register Voter"}
-      </button>
-      {message && (
-        <p className="text-center text-green-500 text-sm mt-2">{message}</p>
-      )}
-      {error && (
-        <p className="text-center text-red-500 text-sm mt-2">{error}</p>
-      )}
-    </form>
-  );
-}
 
 export default function ManageVotersPage() {
   const [voters, setVoters] = useState<User[]>([]);
@@ -111,7 +26,7 @@ export default function ManageVotersPage() {
         const data: User[] = await res.json();
         setVoters(data);
       } catch (err) {
-        let errorMessage = "An unexpected error occurred.";
+        let errorMessage = `An unexpected error occurred. : ${err}`;
         if (err instanceof Error) errorMessage = err.message;
         setError(errorMessage);
       } finally {
@@ -120,13 +35,6 @@ export default function ManageVotersPage() {
     };
     fetchVoters();
   }, []);
-
-  const handleVoterAdded = (newVoter: User) => {
-    console.log(
-      "New voter registered. They will appear in the main list after voting.",
-      newVoter
-    );
-  };
 
   const handleDeleteVoter = async (id: string) => {
     if (
