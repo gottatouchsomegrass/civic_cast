@@ -216,7 +216,7 @@ export default function ManageCandidatesPage() {
       try {
         const [usersRes, electionsRes] = await Promise.all([
           fetch("/api/users"),
-          fetch(`/api/elections?adminId=${adminId}`),
+          fetch(`/api/admin/elections?adminId=${adminId}`),
         ]);
         if (!usersRes.ok || !electionsRes.ok)
           throw new Error("Could not fetch required data.");

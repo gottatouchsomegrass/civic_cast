@@ -1,37 +1,78 @@
 import { NextResponse } from "next/server";
-import connectToDatabase from "@/lib/mongodb";
-import User from "@/model/User";
-import Vote from "@/model/Vote";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/authOptions";
+import dbConnect from "@/lib/mongodb";
 import Election from "@/model/Election";
+import mongoose from "mongoose";
+
+import "@/model/Vote";
+import "@/model/User";
 
 export async function GET(request: Request) {
-  await connectToDatabase();
-  const url = new URL(request.url);
-  const adminId = url.searchParams.get("adminId");
-  if (!adminId) {
-    return NextResponse.json({ message: "Missing adminId" }, { status: 400 });
-  }
   try {
-    // 1. Find all elections created by this admin
-    const elections = await Election.find({ createdBy: adminId }).select("_id");
-    const electionIds = elections.map((e) => e._id);
-    if (electionIds.length === 0) {
-      return NextResponse.json({ voters: [] });
+    await dbConnect();
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?._id || session.user.role !== "admin") {
+      return NextResponse.json({ message: "Not Authorized" }, { status: 401 });
     }
-    // 2. Find all votes in those elections
-    const votes = await Vote.find({ electionId: { $in: electionIds } }).select("voterId");
-    const voterIds = [...new Set(votes.map((v) => v.voterId.toString()))];
-    if (voterIds.length === 0) {
-      return NextResponse.json({ voters: [] });
-    }
-    // 3. Get voter user details
-    const voters = await User.find({ _id: { $in: voterIds }, role: "voter" }).select("-password");
-    return NextResponse.json({ voters });
+
+    const adminId = new mongoose.Types.ObjectId(session.user._id);
+
+    const voters = await Election.aggregate([
+      {
+        $match: { createdBy: adminId },
+      },
+
+      {
+        $lookup: {
+          from: "votes",
+          localField: "_id",
+          foreignField: "electionId",
+          as: "electionVotes",
+        },
+      },
+
+      {
+        $unwind: "$electionVotes",
+      },
+
+      {
+        $group: {
+          _id: "$electionVotes.voterId",
+        },
+      },
+
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "voterDetails",
+        },
+      },
+
+      {
+        $unwind: "$voterDetails",
+      },
+
+      {
+        $replaceRoot: { newRoot: "$voterDetails" },
+      },
+
+      {
+        $project: {
+          password: 0,
+        },
+      },
+    ]);
+
+    return NextResponse.json(voters);
   } catch (error) {
-    console.error(error);
+    console.error("Failed to fetch voters for admin:", error);
     return NextResponse.json(
-      { message: "Failed to fetch voters by admin" },
+      { message: "Internal Server Error" },
       { status: 500 }
     );
   }
-} 
+}
