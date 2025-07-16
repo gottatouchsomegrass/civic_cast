@@ -11,7 +11,6 @@ import gsap from "gsap";
 import { Loader2 } from "lucide-react";
 
 export default function SignInPage() {
-  const router = useRouter();
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const containerRef = useRef(null);
