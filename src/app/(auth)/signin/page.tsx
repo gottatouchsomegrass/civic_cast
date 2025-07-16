@@ -78,10 +78,7 @@ export default function SignInPage() {
       ref={containerRef}
       className="relative min-h-screen overflow-hidden bg-[#0a0a0a] text-white"
     >
-      {/* Animated background element */}
       <div className="background-glow absolute top-1/4 left-1/4 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-500/20 opacity-20 blur-3xl"></div>
-
-      {/* FIX: Navbar has been removed for a focused login experience */}
 
       <div className="flex min-h-screen items-center justify-center px-4">
         <div className="sign-in-card invisible w-full max-w-md space-y-8 rounded-2xl border border-gray-800 bg-[#181818]/80 p-10 shadow-2xl backdrop-blur-sm">

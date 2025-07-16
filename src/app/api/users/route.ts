@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb";
+import "@/model/Election";
+
 import User from "@/model/User";
 
 export async function GET() {
