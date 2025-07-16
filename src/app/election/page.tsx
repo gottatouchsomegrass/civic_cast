@@ -46,34 +46,24 @@ export default function ElectionPage() {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
-
-      const maxRetries = 3;
-      const retryDelay = 500;
-
-      for (let i = 0; i <= maxRetries; i++) {
-        try {
-          const [electionsRes, usersRes] = await Promise.all([
-            fetch("/api/elections"),
-            fetch("/api/users"),
-          ]);
-
-          if (!electionsRes.ok || !usersRes.ok)
-            throw new Error("Failed to fetch essential data.");
-
-          setElections(await electionsRes.json());
-          setCandidates((await usersRes.json()).candidates || []);
-
-          break; // exit the loop if the requests are successful
-        } catch (error) {
-          if (i < maxRetries) {
-            await new Promise((resolve) => setTimeout(resolve, retryDelay));
-          } else {
-            setError(`Failed to load election data. ${error}`);
-          }
-        }
+      try {
+        const [electionsRes, usersRes] = await Promise.all([
+          fetch("/api/elections"),
+          fetch("/api/users"),
+        ]);
+        if (!electionsRes.ok) throw new Error("Failed to fetch elections.");
+        if (!usersRes.ok) throw new Error("Failed to fetch candidate data.");
+        const electionsData = await electionsRes.json();
+        const usersData = await usersRes.json();
+        setElections(electionsData);
+        setCandidates(usersData.candidates || usersData.users || []);
+      } catch (err) {
+        let errorMessage = "An unexpected error occurred.";
+        if (err instanceof Error) errorMessage = err.message;
+        setError(`Failed to load data: ${errorMessage}`);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     };
     fetchData();
   }, []);
@@ -90,7 +80,9 @@ export default function ElectionPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ voterId, electionId: selectedElection._id }),
         });
-        if (res.ok) setUserVotesForElection(await res.json());
+        if (res.ok) {
+          setUserVotesForElection(await res.json());
+        }
       } catch (e) {
         console.error("Could not fetch user's votes:", e);
       }
@@ -160,8 +152,6 @@ export default function ElectionPage() {
         toast.success("Vote cast successfully!");
         setShowConfetti(true);
       } else {
-        if (res.status === 409)
-          setUserVotesForElection((prev) => ({ ...prev, [post]: true }));
         toast.error(data.message || "Failed to cast vote.");
       }
     } catch {
@@ -172,21 +162,25 @@ export default function ElectionPage() {
   };
 
   const renderContent = () => {
-    if (loading)
+    if (loading) {
       return (
         <div className="flex flex-col h-[80vh] w-full items-center justify-center text-white">
           <Loader2 className="h-8 w-8 animate-spin text-red-500 mb-4" />
           <p>Loading Elections...</p>
         </div>
       );
-    if (error)
+    }
+    if (error) {
       return (
         <div className="flex h-[80vh] w-full items-center justify-center text-white">
           <p className="text-red-400 text-center">{error}</p>
         </div>
       );
+    }
+
     return (
       <div className="relative w-full min-h-[calc(100vh-150px)]">
+        {/* View 1: Election Grid */}
         <div
           ref={electionGridRef}
           className={`w-full max-w-5xl mx-auto py-16 ${
@@ -206,10 +200,7 @@ export default function ElectionPage() {
                 election.endDate
               );
               return (
-                <div
-                  key={election._id}
-                  className="election-card-container revolving-border-container"
-                >
+                <div key={election._id} className="election-card-container">
                   <button
                     className="revolving-border-card w-full p-8 flex flex-col items-center text-center group"
                     onClick={() => handleSelectElection(election)}
@@ -237,6 +228,7 @@ export default function ElectionPage() {
           </div>
         </div>
 
+        {/* View 2: Selected Election Details */}
         {selectedElection && (
           <div
             ref={postsViewRef}
@@ -263,12 +255,16 @@ export default function ElectionPage() {
                     c.election?._id === selectedElection._id &&
                     c.electionPost === post.title
                 );
-                const hasVoted = userVotesForElection[post.title];
-                const isElectionOngoing =
-                  getElectionStatus(
-                    selectedElection.startDate,
-                    selectedElection.endDate
-                  ).text === "Ongoing";
+
+                const electionStatus = getElectionStatus(
+                  selectedElection.startDate,
+                  selectedElection.endDate
+                );
+                const hasVotedForPost = userVotesForElection[post.title];
+
+                const isButtonDisabled =
+                  hasVotedForPost || electionStatus.text === "Completed";
+
                 return (
                   <div
                     key={post._id}
@@ -278,7 +274,7 @@ export default function ElectionPage() {
                       <h3 className="text-3xl font-semibold text-white">
                         {post.title}
                       </h3>
-                      {hasVoted && (
+                      {hasVotedForPost && (
                         <div className="flex items-center gap-2 text-green-400 bg-green-500/10 px-3 py-1 rounded-full text-sm font-medium">
                           <Check className="h-4 w-4" /> Voted
                         </div>
@@ -290,15 +286,21 @@ export default function ElectionPage() {
                           <CandidateVoteCard
                             key={candidate._id}
                             candidate={candidate}
-                            hasVoted={hasVoted || !isElectionOngoing}
+                            hasVoted={isButtonDisabled}
                             isVoting={voteLoading === post.title}
-                            onVote={() =>
-                              handleVote(
-                                candidate._id,
-                                selectedElection._id,
-                                post.title
-                              )
-                            }
+                            onVote={() => {
+                              if (electionStatus.text === "Ongoing") {
+                                handleVote(
+                                  candidate._id,
+                                  selectedElection._id,
+                                  post.title
+                                );
+                              } else if (electionStatus.text === "Upcoming") {
+                                toast.error(
+                                  "This election has not started yet."
+                                );
+                              }
+                            }}
                           />
                         ))}
                       </div>
