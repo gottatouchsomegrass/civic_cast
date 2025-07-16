@@ -1,21 +1,24 @@
-// app/api/users/route.ts
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb";
 import User from "@/model/User";
 
 export async function GET() {
   await connectToDatabase();
+  console.log("Connected to database");
 
   try {
-    // --- FIX: Add .populate('election') to the query for candidates ---
+    console.log("Querying users...");
     const candidates = await User.find({ role: "candidate" }).populate(
       "election"
     );
-    const voters = await User.find({ role: "voter" }).select("-password"); // Voters don't need population
+    console.log("Candidates fetched:", candidates);
+
+    const voters = await User.find({ role: "voter" }).select("-password");
+    console.log("Voters fetched:", voters);
 
     return NextResponse.json({ voters, candidates });
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching users:", error);
     return NextResponse.json(
       { message: "Failed to fetch users" },
       { status: 500 }

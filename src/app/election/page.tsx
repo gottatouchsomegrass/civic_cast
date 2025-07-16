@@ -10,7 +10,7 @@ import { ArrowLeft, Check, Loader2, Users, Circle } from "lucide-react";
 import Navbar from "@/components/shared/Navbar";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
-import CandidateVoteCard from "@/components/election/CandidateCard"; // Correctly import the new component
+import CandidateVoteCard from "@/components/election/CandidateCard";
 
 const getElectionStatus = (startDate: Date, endDate: Date) => {
   const now = new Date();
@@ -25,7 +25,6 @@ export default function ElectionPage() {
   const { data: session } = useSession();
   const voterId = session?.user?._id;
 
-  // --- State Management ---
   const [elections, setElections] = useState<Election[]>([]);
   const [candidates, setCandidates] = useState<User[]>([]);
   const [selectedElection, setSelectedElection] = useState<Election | null>(
@@ -39,30 +38,42 @@ export default function ElectionPage() {
   const [voteLoading, setVoteLoading] = useState<string | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
 
-  // --- Refs for GSAP Animation ---
   const mainContainer = useRef(null);
   const electionGridRef = useRef(null);
   const postsViewRef = useRef(null);
 
-  // --- Data Fetching Logic ---
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
-      try {
-        const [electionsRes, usersRes] = await Promise.all([
-          fetch("/api/elections"),
-          fetch("/api/users"),
-        ]);
-        if (!electionsRes.ok || !usersRes.ok)
-          throw new Error("Failed to fetch essential data.");
-        setElections(await electionsRes.json());
-        setCandidates((await usersRes.json()).candidates || []);
-      } catch (err) {
-        setError(`Failed to load election data. ${err}`);
-      } finally {
-        setLoading(false);
+
+      const maxRetries = 3;
+      const retryDelay = 500;
+
+      for (let i = 0; i <= maxRetries; i++) {
+        try {
+          const [electionsRes, usersRes] = await Promise.all([
+            fetch("/api/elections"),
+            fetch("/api/users"),
+          ]);
+
+          if (!electionsRes.ok || !usersRes.ok)
+            throw new Error("Failed to fetch essential data.");
+
+          setElections(await electionsRes.json());
+          setCandidates((await usersRes.json()).candidates || []);
+
+          break; // exit the loop if the requests are successful
+        } catch (error) {
+          if (i < maxRetries) {
+            await new Promise((resolve) => setTimeout(resolve, retryDelay));
+          } else {
+            setError(`Failed to load election data. ${error}`);
+          }
+        }
       }
+
+      setLoading(false);
     };
     fetchData();
   }, []);
@@ -87,7 +98,6 @@ export default function ElectionPage() {
     fetchVotes();
   }, [selectedElection, voterId]);
 
-  // --- GSAP Animation Logic ---
   useGSAP(
     () => {
       if (loading) return;
@@ -131,7 +141,6 @@ export default function ElectionPage() {
       onComplete: () => setSelectedElection(null),
     });
 
-  // --- Core Voting Functionality ---
   const handleVote = async (
     candidateId: string,
     electionId: string,
@@ -162,7 +171,6 @@ export default function ElectionPage() {
     }
   };
 
-  // --- Main Render Function ---
   const renderContent = () => {
     if (loading)
       return (
